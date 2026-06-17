@@ -11,7 +11,7 @@ export const KEY_LABELS: Record<TrackedKey, KeyLabel> = {
   e: { label: 'Start Again', note: 'distracted mind' },
   c: { label: 'Craving' },
   d: { label: 'Hatred' },
-  f: { label: 'Breath', note: 'too agitated for sensations' },
+  f: { label: 'Breathing', note: 'too agitated for sensations' },
 }
 
 export const KEY_COLORS: Record<TrackedKey, string> = {

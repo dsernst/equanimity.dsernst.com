@@ -15,17 +15,17 @@ export const KEY_LABELS: Record<TrackedKey, KeyLabel> = {
 }
 
 export const KEY_COLORS: Record<TrackedKey, string> = {
-  d: 'bg-sky-500',
+  d: 'bg-rose-500',
   e: 'bg-emerald-500',
   c: 'bg-amber-500',
-  f: 'bg-rose-500',
+  f: 'bg-sky-500',
 }
 
 export const KEY_RING_COLORS: Record<TrackedKey, string> = {
-  d: 'ring-sky-400',
+  d: 'ring-rose-400',
   e: 'ring-emerald-400',
   c: 'ring-amber-400',
-  f: 'ring-rose-400',
+  f: 'ring-sky-400',
 }
 
 export const DIRECTION_LABELS: { direction: string; key: TrackedKey }[] = [

@@ -1,6 +1,6 @@
 'use client'
 
-import { DIRECTION_LABELS, KEY_COLORS, KEY_LABELS, KEY_RING_COLORS } from '@/lib/constants'
+import { DIRECTION_LABELS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { TrackedKey } from '@/lib/types'
 
 type DpadDirection = 'up' | 'right' | 'down' | 'left'
@@ -18,6 +18,35 @@ const CONTROLLER_STYLE = {
   width: '9rem',
 } as const
 
+function DpadArrow({ direction }: { direction: DpadDirection }) {
+  const rotation =
+    direction === 'right'
+      ? 'rotate(90deg)'
+      : direction === 'down'
+        ? 'rotate(180deg)'
+        : direction === 'left'
+          ? 'rotate(-90deg)'
+          : undefined
+
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      className="h-3.5 w-3.5"
+      style={rotation ? { transform: rotation } : undefined}
+      aria-hidden
+    >
+      <path d="M6 2 L10 9 H2 Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+const DPAD_CORNERS: Record<DpadDirection, string> = {
+  up: 'rounded-t-md',
+  right: 'rounded-r-md',
+  down: 'rounded-b-md',
+  left: 'rounded-l-md',
+}
+
 function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean }) {
   const key = DPAD_MAP[direction]
   const position =
@@ -31,13 +60,11 @@ function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean 
 
   return (
     <div
-      className={`flex h-9 w-9 items-center justify-center rounded-md font-mono text-sm font-bold uppercase transition-all duration-100 ${position} ${
-        held
-          ? `${KEY_COLORS[key]} text-white shadow-md ring-2 ${KEY_RING_COLORS[key]} scale-110`
-          : 'bg-white/90 text-zinc-700'
+      className={`flex h-9 w-9 items-center justify-center ${DPAD_CORNERS[direction]} transition-all duration-100 ${position} ${
+        held ? `${KEY_COLORS[key]} text-white shadow-md` : 'bg-white/90 text-zinc-600'
       }`}
     >
-      {key}
+      <DpadArrow direction={direction} />
     </div>
   )
 }
@@ -50,15 +77,10 @@ function ControllerGraphic({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
         className="relative flex flex-col items-center rounded-4xl px-4 py-5 shadow-inner"
         style={CONTROLLER_STYLE}
       >
-        <div className="grid grid-cols-3 grid-rows-3 gap-0.5">
+        <div className="grid grid-cols-3 grid-rows-3">
           <DpadKey direction="up" held={heldKeys.has('e')} />
           <DpadKey direction="left" held={heldKeys.has('d')} />
-          <div className="col-start-2 row-start-2 flex h-9 w-9 items-center justify-center">
-            <div className="relative h-full w-full">
-              <div className="absolute left-1/2 top-0 h-full w-2.5 -translate-x-1/2 rounded-sm bg-white/90" />
-              <div className="absolute left-0 top-1/2 h-2.5 w-full -translate-y-1/2 rounded-sm bg-white/90" />
-            </div>
-          </div>
+          <div className="col-start-2 row-start-2 h-9 w-9 bg-white/50" />
           <DpadKey direction="right" held={heldKeys.has('c')} />
           <DpadKey direction="down" held={heldKeys.has('f')} />
         </div>

@@ -21,13 +21,6 @@ export const KEY_COLORS: Record<TrackedKey, string> = {
   f: 'bg-sky-500',
 }
 
-export const KEY_RING_COLORS: Record<TrackedKey, string> = {
-  d: 'ring-rose-400',
-  e: 'ring-emerald-400',
-  c: 'ring-amber-400',
-  f: 'ring-sky-400',
-}
-
 export const DIRECTION_LABELS: { direction: string; key: TrackedKey }[] = [
   { direction: 'Up', key: 'e' },
   { direction: 'Right', key: 'c' },

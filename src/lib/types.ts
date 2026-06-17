@@ -7,6 +7,7 @@ export type KeyEventType = "press" | "hold";
 export type KeyLogEntry = {
   id: string;
   key: TrackedKey;
+  label: string;
   timestamp: number;
   type: KeyEventType;
   durationMs?: number;

@@ -1,4 +1,6 @@
-import { KEY_COLORS, KEY_RING_COLORS } from '@/lib/constants'
+'use client'
+
+import { DIRECTION_LABELS, KEY_COLORS, KEY_LABELS, KEY_RING_COLORS } from '@/lib/constants'
 import { TrackedKey } from '@/lib/types'
 
 type DpadDirection = 'up' | 'right' | 'down' | 'left'
@@ -9,6 +11,12 @@ const DPAD_MAP: Record<DpadDirection, TrackedKey> = {
   down: 'f',
   left: 'd',
 }
+
+const CONTROLLER_STYLE = {
+  backgroundColor: '#8bdf63',
+  height: '15.5rem',
+  width: '9rem',
+} as const
 
 function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean }) {
   const key = DPAD_MAP[direction]
@@ -34,11 +42,14 @@ function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean 
   )
 }
 
-export default function ControllerLegend({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
+function ControllerGraphic({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Key legend</p>
-      <div className="relative flex h-62 w-36 flex-col items-center rounded-4xl bg-[#8bdf63] px-4 py-5 shadow-inner">
+    <div className="flex w-full flex-col items-center gap-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Controller</p>
+      <div
+        className="relative flex flex-col items-center rounded-4xl px-4 py-5 shadow-inner"
+        style={CONTROLLER_STYLE}
+      >
         <div className="grid grid-cols-3 grid-rows-3 gap-0.5">
           <DpadKey direction="up" held={heldKeys.has('e')} />
           <DpadKey direction="left" held={heldKeys.has('d')} />
@@ -62,6 +73,44 @@ export default function ControllerLegend({ heldKeys }: { heldKeys: Set<TrackedKe
       <p className="text-center text-[10px] leading-snug text-zinc-400">
         8BitDo — rotated, D-pad on top
       </p>
+    </div>
+  )
+}
+
+function KeyReminders() {
+  return (
+    <div className="w-full max-w-sm">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500">Labels</p>
+      <ul className="flex flex-col gap-3 text-sm">
+        {DIRECTION_LABELS.map(({ direction, key }) => {
+          const { label, note } = KEY_LABELS[key]
+          return (
+            <li key={key} className="flex items-start gap-2">
+              <span
+                className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${KEY_COLORS[key]}`}
+              />
+              <div>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-zinc-400">{direction}</span>
+                  <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                    &ldquo;{label}&rdquo;
+                  </span>
+                </div>
+                {note && <p className="text-zinc-400">{note}</p>}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+export default function ControllerLegend({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
+  return (
+    <div className="flex w-full flex-col items-center gap-8">
+      <ControllerGraphic heldKeys={heldKeys} />
+      <KeyReminders />
     </div>
   )
 }

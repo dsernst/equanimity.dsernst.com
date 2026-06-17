@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ControllerLegend from "@/components/ControllerLegend";
 import { formatDuration, formatRelative, formatTimestamp } from "@/lib/format";
-import { HOLD_THRESHOLD_MS, KEY_COLORS } from "@/lib/constants";
+import { HOLD_THRESHOLD_MS, KEY_LABELS } from "@/lib/constants";
+import { speakLabel } from "@/lib/speech";
 import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from "@/lib/types";
 
 const STORAGE_KEY = "equanimity-key-log";
@@ -18,7 +19,11 @@ function loadEntries(): KeyLogEntry[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as KeyLogEntry[];
-    return parsed.map((entry) => ({ ...entry, type: entry.type ?? "press" }));
+    return parsed.map((entry) => ({
+      ...entry,
+      type: entry.type ?? "press",
+      label: entry.label ?? KEY_LABELS[entry.key]?.label ?? entry.key,
+    }));
   } catch {
     return [];
   }
@@ -48,6 +53,7 @@ export default function KeyLogger() {
       appendEntry({
         id: crypto.randomUUID(),
         key,
+        label: KEY_LABELS[key].label,
         timestamp: pressStart,
         type,
         durationMs,
@@ -62,7 +68,10 @@ export default function KeyLogger() {
   }, []);
 
   useEffect(() => {
-    if (!listening) return;
+    if (!listening) {
+      window.speechSynthesis?.cancel();
+      return;
+    }
 
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
@@ -72,6 +81,7 @@ export default function KeyLogger() {
 
       pressStartRef.current[key] = Date.now();
       setHeldKeys((prev) => new Set(prev).add(key));
+      speakLabel(KEY_LABELS[key].label);
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -112,10 +122,10 @@ export default function KeyLogger() {
       .reverse()
       .map((e) => {
         const duration = e.durationMs !== undefined ? formatDuration(e.durationMs) : "";
-        return `${formatTimestamp(e.timestamp)}\t${e.key}\t${e.type}\t${duration}`;
+        return `${formatTimestamp(e.timestamp)}\t${e.label}\t${e.type}\t${duration}`;
       })
       .join("\n");
-    const blob = new Blob([`timestamp\tkey\ttype\tduration\n${lines}\n`], {
+    const blob = new Blob([`timestamp\tlabel\ttype\tduration\n${lines}\n`], {
       type: "text/tab-separated-values",
     });
     const url = URL.createObjectURL(blob);
@@ -139,7 +149,7 @@ export default function KeyLogger() {
         </p>
       </header>
 
-      <section className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+      <section className="flex flex-col gap-4 overflow-visible rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-center gap-2 text-sm">
           <span
             className={`h-2 w-2 rounded-full ${listening ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"}`}
@@ -149,12 +159,10 @@ export default function KeyLogger() {
           </span>
         </div>
 
-        <div className="flex justify-center">
-          <ControllerLegend heldKeys={heldKeys} />
-        </div>
+        <ControllerLegend heldKeys={heldKeys} />
 
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          Press D, E, C, or F. Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked.
+          Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken feedback on press.
         </p>
       </section>
 
@@ -201,9 +209,9 @@ export default function KeyLogger() {
                 return (
                   <li
                     key={entry.id}
-                    className="flex items-center gap-4 px-4 py-2.5 font-mono text-sm"
+                    className="flex items-center gap-4 px-4 py-2.5 text-sm"
                   >
-                    <span className="w-28 shrink-0 text-zinc-500 dark:text-zinc-400">
+                    <span className="w-28 shrink-0 font-mono text-zinc-500 dark:text-zinc-400">
                       {formatTimestamp(entry.timestamp)}
                     </span>
                     {sessionStart && i === entries.length - 1 && (
@@ -215,10 +223,8 @@ export default function KeyLogger() {
                     {!relative && i !== entries.length - 1 && (
                       <span className="w-16 shrink-0" />
                     )}
-                    <span
-                      className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-bold uppercase text-white ${KEY_COLORS[entry.key]}`}
-                    >
-                      {entry.key}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                      &ldquo;{entry.label}&rdquo;
                     </span>
                     {entry.type === "hold" && entry.durationMs !== undefined ? (
                       <span className="text-zinc-500 dark:text-zinc-400">

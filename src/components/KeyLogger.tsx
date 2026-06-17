@@ -46,14 +46,16 @@ export default function KeyLogger() {
     saveEntries(entriesRef.current);
   }, []);
 
-  const logEvent = useCallback(
-    (key: TrackedKey, type: KeyEventType, durationMs?: number) => {
+  const logKeyRelease = useCallback(
+    (key: TrackedKey, pressStart: number) => {
+      const durationMs = Date.now() - pressStart;
+      const type: KeyEventType = durationMs >= HOLD_THRESHOLD_MS ? "hold" : "press";
       appendEntry({
         id: crypto.randomUUID(),
         key,
-        timestamp: Date.now(),
+        timestamp: pressStart,
         type,
-        ...(durationMs !== undefined && { durationMs }),
+        durationMs,
       });
     },
     [appendEntry],
@@ -75,7 +77,6 @@ export default function KeyLogger() {
 
       pressStartRef.current[key] = Date.now();
       setHeldKeys((prev) => new Set(prev).add(key));
-      logEvent(key, "press");
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -92,8 +93,7 @@ export default function KeyLogger() {
       });
 
       if (!start) return;
-      const durationMs = Date.now() - start;
-      if (durationMs >= HOLD_THRESHOLD_MS) logEvent(key, "hold", durationMs);
+      logKeyRelease(key, start);
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -102,7 +102,7 @@ export default function KeyLogger() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [listening, logEvent]);
+  }, [listening, logKeyRelease]);
 
   const clearLog = () => {
     entriesRef.current = [];
@@ -170,7 +170,7 @@ export default function KeyLogger() {
         </div>
 
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          Press D, E, C, or F. Holds over {HOLD_THRESHOLD_MS}ms are logged on release.
+          Press D, E, C, or F. Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked.
         </p>
       </section>
 

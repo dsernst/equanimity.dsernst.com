@@ -1,17 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import ControllerLegend from "@/components/ControllerLegend";
 import { formatDuration, formatRelative, formatTimestamp } from "@/lib/format";
+import { HOLD_THRESHOLD_MS, KEY_COLORS } from "@/lib/constants";
 import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from "@/lib/types";
 
 const STORAGE_KEY = "equanimity-key-log";
-const HOLD_THRESHOLD_MS = 400;
-const KEY_COLORS: Record<TrackedKey, string> = {
-  d: "bg-sky-500",
-  e: "bg-emerald-500",
-  c: "bg-amber-500",
-  f: "bg-rose-500",
-};
 
 function isTrackedKey(key: string): key is TrackedKey {
   return TRACKED_KEYS.includes(key as TrackedKey);
@@ -154,19 +149,8 @@ export default function KeyLogger() {
           </span>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
-          {TRACKED_KEYS.map((key) => (
-            <div
-              key={key}
-              className={`flex h-20 flex-col items-center justify-center rounded-xl border-2 transition-all duration-100 ${
-                heldKeys.has(key)
-                  ? `${KEY_COLORS[key]} border-transparent text-white scale-105 shadow-lg`
-                  : "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-              }`}
-            >
-              <span className="font-mono text-2xl font-bold uppercase">{key}</span>
-            </div>
-          ))}
+        <div className="flex justify-center">
+          <ControllerLegend heldKeys={heldKeys} />
         </div>
 
         <p className="text-xs text-zinc-400 dark:text-zinc-500">

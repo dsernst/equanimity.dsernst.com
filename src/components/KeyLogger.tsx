@@ -229,12 +229,10 @@ export default function KeyLogger() {
                     <span className="font-medium text-zinc-800 dark:text-zinc-100">
                       &ldquo;{entry.label}&rdquo;
                     </span>
-                    {entry.type === "hold" && entry.durationMs !== undefined ? (
+                    {entry.type === "hold" && entry.durationMs !== undefined && (
                       <span className="text-zinc-500 dark:text-zinc-400">
-                        hold {formatDuration(entry.durationMs)}
+                        held {formatDuration(entry.durationMs)}
                       </span>
-                    ) : (
-                      <span className="text-zinc-400">press</span>
                     )}
                   </li>
                 );

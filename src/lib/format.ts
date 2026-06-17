@@ -13,3 +13,8 @@ export function formatRelative(from: number, to: number): string {
   if (delta < 1000) return `+${delta}ms`;
   return `+${(delta / 1000).toFixed(2)}s`;
 }
+
+export function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
+}

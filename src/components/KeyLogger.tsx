@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatRelative, formatTimestamp } from "@/lib/format";
-import { KeyLogEntry, TRACKED_KEYS, TrackedKey } from "@/lib/types";
+import { formatDuration, formatRelative, formatTimestamp } from "@/lib/format";
+import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from "@/lib/types";
 
 const STORAGE_KEY = "equanimity-key-log";
+const HOLD_THRESHOLD_MS = 400;
 const KEY_COLORS: Record<TrackedKey, string> = {
   d: "bg-sky-500",
   e: "bg-emerald-500",
@@ -21,7 +22,8 @@ function loadEntries(): KeyLogEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as KeyLogEntry[];
+    const parsed = JSON.parse(raw) as KeyLogEntry[];
+    return parsed.map((entry) => ({ ...entry, type: entry.type ?? "press" }));
   } catch {
     return [];
   }
@@ -33,30 +35,29 @@ function saveEntries(entries: KeyLogEntry[]) {
 
 export default function KeyLogger() {
   const [entries, setEntries] = useState<KeyLogEntry[]>([]);
-  const [activeKeys, setActiveKeys] = useState<Set<TrackedKey>>(new Set());
+  const [heldKeys, setHeldKeys] = useState<Set<TrackedKey>>(new Set());
   const [listening, setListening] = useState(true);
   const entriesRef = useRef<KeyLogEntry[]>([]);
+  const pressStartRef = useRef<Partial<Record<TrackedKey, number>>>({});
 
-  const logKey = useCallback((key: TrackedKey) => {
-    const entry: KeyLogEntry = {
-      id: crypto.randomUUID(),
-      key,
-      timestamp: Date.now(),
-    };
-
+  const appendEntry = useCallback((entry: KeyLogEntry) => {
     entriesRef.current = [entry, ...entriesRef.current];
     setEntries(entriesRef.current);
     saveEntries(entriesRef.current);
-
-    setActiveKeys((prev) => new Set(prev).add(key));
-    window.setTimeout(() => {
-      setActiveKeys((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    }, 150);
   }, []);
+
+  const logEvent = useCallback(
+    (key: TrackedKey, type: KeyEventType, durationMs?: number) => {
+      appendEntry({
+        id: crypto.randomUUID(),
+        key,
+        timestamp: Date.now(),
+        type,
+        ...(durationMs !== undefined && { durationMs }),
+      });
+    },
+    [appendEntry],
+  );
 
   useEffect(() => {
     setEntries(loadEntries());
@@ -70,25 +71,58 @@ export default function KeyLogger() {
       const key = e.key.toLowerCase();
       if (!isTrackedKey(key)) return;
       e.preventDefault();
-      logKey(key);
+      if (e.repeat) return;
+
+      pressStartRef.current[key] = Date.now();
+      setHeldKeys((prev) => new Set(prev).add(key));
+      logEvent(key, "press");
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (!isTrackedKey(key)) return;
+      e.preventDefault();
+
+      const start = pressStartRef.current[key];
+      delete pressStartRef.current[key];
+      setHeldKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+
+      if (!start) return;
+      const durationMs = Date.now() - start;
+      if (durationMs >= HOLD_THRESHOLD_MS) logEvent(key, "hold", durationMs);
     };
 
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [listening, logKey]);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [listening, logEvent]);
 
   const clearLog = () => {
     entriesRef.current = [];
     setEntries([]);
+    pressStartRef.current = {};
+    setHeldKeys(new Set());
     localStorage.removeItem(STORAGE_KEY);
   };
 
   const exportLog = () => {
     const lines = [...entries]
       .reverse()
-      .map((e) => `${formatTimestamp(e.timestamp)}\t${e.key}`)
+      .map((e) => {
+        const duration = e.durationMs !== undefined ? formatDuration(e.durationMs) : "";
+        return `${formatTimestamp(e.timestamp)}\t${e.key}\t${e.type}\t${duration}`;
+      })
       .join("\n");
-    const blob = new Blob([`timestamp\tkey\n${lines}\n`], { type: "text/tab-separated-values" });
+    const blob = new Blob([`timestamp\tkey\ttype\tduration\n${lines}\n`], {
+      type: "text/tab-separated-values",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -125,7 +159,7 @@ export default function KeyLogger() {
             <div
               key={key}
               className={`flex h-20 flex-col items-center justify-center rounded-xl border-2 transition-all duration-100 ${
-                activeKeys.has(key)
+                heldKeys.has(key)
                   ? `${KEY_COLORS[key]} border-transparent text-white scale-105 shadow-lg`
                   : "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
               }`}
@@ -136,7 +170,7 @@ export default function KeyLogger() {
         </div>
 
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          Press D, E, C, or F on your controller or keyboard.
+          Press D, E, C, or F. Holds over {HOLD_THRESHOLD_MS}ms are logged on release.
         </p>
       </section>
 
@@ -202,6 +236,13 @@ export default function KeyLogger() {
                     >
                       {entry.key}
                     </span>
+                    {entry.type === "hold" && entry.durationMs !== undefined ? (
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        hold {formatDuration(entry.durationMs)}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-400">press</span>
+                    )}
                   </li>
                 );
               })}

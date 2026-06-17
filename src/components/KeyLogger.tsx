@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ControllerLegend from "@/components/ControllerLegend";
 import { formatDuration, formatRelative, formatTimestamp } from "@/lib/format";
-import { HOLD_THRESHOLD_MS, KEY_LABELS } from "@/lib/constants";
+import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from "@/lib/constants";
 import { speakLabel } from "@/lib/speech";
 import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from "@/lib/types";
 
@@ -223,6 +223,9 @@ export default function KeyLogger() {
                     {!relative && i !== entries.length - 1 && (
                       <span className="w-16 shrink-0" />
                     )}
+                    <span
+                      className={`inline-block h-2 w-2 shrink-0 rounded-full ${KEY_COLORS[entry.key]}`}
+                    />
                     <span className="font-medium text-zinc-800 dark:text-zinc-100">
                       &ldquo;{entry.label}&rdquo;
                     </span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
 import { formatDuration, formatRelative, formatTimestamp } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
@@ -63,8 +63,9 @@ export default function KeyLogger() {
   )
 
   useEffect(() => {
-    setEntries(loadEntries())
-    entriesRef.current = loadEntries()
+    const loaded = loadEntries()
+    entriesRef.current = loaded
+    startTransition(() => setEntries(loaded))
   }, [])
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import ControllerLegend from '@/components/ControllerLegend'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
 import { formatDuration, formatRelative, formatTimestamp } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
+import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
 import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from '@/lib/types'
 
@@ -38,6 +39,8 @@ export default function KeyLogger() {
   const [entries, setEntries] = useState<KeyLogEntry[]>([])
   const [heldKeys, setHeldKeys] = useState<Set<TrackedKey>>(new Set())
   const [listening, setListening] = useState(true)
+  const [idleBeepTesting, setIdleBeepTesting] = useState(false)
+  const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressStartRef = useRef<Partial<Record<TrackedKey, number>>>({})
   const bumpActivity = useControllerIdleWarning(listening)
@@ -69,6 +72,33 @@ export default function KeyLogger() {
     entriesRef.current = loaded
     startTransition(() => setEntries(loaded))
   }, [])
+
+  useEffect(() => () => cancelIdleWarningSequenceTest(), [])
+
+  const stopIdleBeepTest = () => {
+    cancelIdleWarningSequenceTest()
+    setIdleBeepTesting(false)
+  }
+
+  const toggleIdleBeepTest = () => {
+    if (idleBeepTesting) {
+      stopIdleBeepTest()
+      return
+    }
+    setIdleBeepTestSecs(30)
+    setIdleBeepTesting(true)
+    playIdleWarningSequenceTest(stopIdleBeepTest)
+  }
+
+  useEffect(() => {
+    if (!idleBeepTesting) return
+
+    const id = window.setInterval(() => {
+      setIdleBeepTestSecs((s) => Math.max(0, s - 1))
+    }, 1000)
+
+    return () => window.clearInterval(id)
+  }, [idleBeepTesting])
 
   useEffect(() => {
     if (!listening) {
@@ -175,11 +205,18 @@ export default function KeyLogger() {
             Idle beep
           </summary>
           <p className="mt-1.5 leading-relaxed">
-            After 14.5min with no button presses, a double beep warns that the controller will sleep
-            in 30 seconds. Press any button to reset the timer.
+            In the last 30 seconds before sleep, beeps repeat at t-30, t-20, t-15, t-10, t-6.5, and
+            t-3.5 — getting louder each time. Press any button to reset the timer.
             <br />
             <i>ABXY recommended, to not create log entries.</i>
           </p>
+          <button
+            type="button"
+            onClick={toggleIdleBeepTest}
+            className="mt-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm tabular-nums text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
+          </button>
         </details>
       </section>
 

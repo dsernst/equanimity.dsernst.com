@@ -1,31 +1,34 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { playIdleWarningBeep } from '@/lib/beep'
-import { CONTROLLER_IDLE_WARNING_BEFORE_MS, CONTROLLER_SLEEP_MS } from '@/lib/constants'
+import { CONTROLLER_IDLE_WARNINGS, CONTROLLER_SLEEP_MS } from '@/lib/constants'
 
-const POLL_MS = 1000
+const POLL_MS = 500
 
 export function useControllerIdleWarning(active: boolean) {
   const lastActivityRef = useRef(0)
-  const warnedRef = useRef(false)
+  const firedRef = useRef<Set<number>>(new Set())
 
   const bumpActivity = useCallback(() => {
     lastActivityRef.current = Date.now()
-    warnedRef.current = false
+    firedRef.current.clear()
   }, [])
 
   useEffect(() => {
     if (!active) return
 
     lastActivityRef.current = Date.now()
-    warnedRef.current = false
+    firedRef.current.clear()
 
     const tick = () => {
       const idleMs = Date.now() - lastActivityRef.current
-      const warnAtMs = CONTROLLER_SLEEP_MS - CONTROLLER_IDLE_WARNING_BEFORE_MS
-      if (idleMs < warnAtMs || warnedRef.current) return
 
-      warnedRef.current = true
-      playIdleWarningBeep()
+      for (const { remainingMs, gain } of CONTROLLER_IDLE_WARNINGS) {
+        if (firedRef.current.has(remainingMs)) continue
+        if (idleMs < CONTROLLER_SLEEP_MS - remainingMs) continue
+
+        firedRef.current.add(remainingMs)
+        playIdleWarningBeep(gain)
+      }
     }
 
     const id = window.setInterval(tick, POLL_MS)

@@ -9,7 +9,16 @@ export const HOLD_THRESHOLD_MS = 400
 
 /** 8BitDo Bluetooth auto-sleep after this much inactivity. */
 export const CONTROLLER_SLEEP_MS = 15 * 60 * 1000
-export const CONTROLLER_IDLE_WARNING_BEFORE_MS = 30 * 1000
+
+/** Escalating beeps in the final 30s before sleep — remainingMs before sleep, gain 0–1. */
+export const CONTROLLER_IDLE_WARNINGS = [
+  { remainingMs: 30_000, gain: 0.12 },
+  { remainingMs: 20_000, gain: 0.18 },
+  { remainingMs: 15_000, gain: 0.26 },
+  { remainingMs: 10_000, gain: 0.34 },
+  { remainingMs: 6_500, gain: 0.44 },
+  { remainingMs: 3_500, gain: 0.58 },
+] as const
 
 export const KEY_LABELS: Record<TrackedKey, KeyLabel> = {
   e: { label: 'Start Again', note: 'distracted mind' },

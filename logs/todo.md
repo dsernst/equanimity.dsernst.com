@@ -1,0 +1,5 @@
+- [ ] dont need "equanimity-log-" prefix
+- [ ] filename timestamps should use local timezone? look like UTC
+- [ ] combine type & duration col?
+  - [ ] drop "type" col
+  - [ ] leave blank when below held threshold (0.4s)

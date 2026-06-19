@@ -3,7 +3,7 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
-import { formatDuration, formatRelative, formatTimestamp } from '@/lib/format'
+import { formatDuration, formatExportFilename, formatRelative, formatTimestamp } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
@@ -156,17 +156,18 @@ export default function KeyLogger() {
     const lines = [...entries]
       .reverse()
       .map((e) => {
-        const duration = e.durationMs !== undefined ? formatDuration(e.durationMs) : ''
-        return `${formatTimestamp(e.timestamp)}\t${e.label}\t${e.type}\t${duration}`
+        const duration =
+          e.type === 'hold' && e.durationMs !== undefined ? formatDuration(e.durationMs) : ''
+        return `${formatTimestamp(e.timestamp)}\t${e.label}\t${duration}`
       })
       .join('\n')
-    const blob = new Blob([`timestamp\tlabel\ttype\tduration\n${lines}\n`], {
+    const blob = new Blob([`timestamp\tlabel\tduration\n${lines}\n`], {
       type: 'text/tab-separated-values',
     })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `equanimity-log-${new Date().toISOString().slice(0, 19)}.tsv`
+    a.download = formatExportFilename()
     a.click()
     URL.revokeObjectURL(url)
   }

@@ -16,3 +16,9 @@ export function formatRelative(from: number, to: number): string {
 export function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
+
+/** Local datetime for export filenames, e.g. `2026-06-19T17_07_29.tsv` */
+export function formatExportFilename(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}_${pad(date.getMinutes())}_${pad(date.getSeconds())}.tsv`
+}

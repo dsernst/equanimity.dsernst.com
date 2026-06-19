@@ -2,6 +2,7 @@
 
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
+import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
 import { formatDuration, formatRelative, formatTimestamp } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { speakLabel } from '@/lib/speech'
@@ -39,6 +40,7 @@ export default function KeyLogger() {
   const [listening, setListening] = useState(true)
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressStartRef = useRef<Partial<Record<TrackedKey, number>>>({})
+  const bumpActivity = useControllerIdleWarning(listening)
 
   const appendEntry = useCallback((entry: KeyLogEntry) => {
     entriesRef.current = [entry, ...entriesRef.current]
@@ -75,10 +77,12 @@ export default function KeyLogger() {
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return
+      bumpActivity()
+
       const key = e.key.toLowerCase()
       if (!isTrackedKey(key)) return
       e.preventDefault()
-      if (e.repeat) return
 
       pressStartRef.current[key] = Date.now()
       setHeldKeys((prev) => new Set(prev).add(key))
@@ -108,7 +112,7 @@ export default function KeyLogger() {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [listening, logKeyRelease])
+  }, [listening, logKeyRelease, bumpActivity])
 
   const clearLog = () => {
     entriesRef.current = []
@@ -166,6 +170,17 @@ export default function KeyLogger() {
           Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
           feedback on press.
         </p>
+        <details className="text-xs text-zinc-400 dark:text-zinc-500">
+          <summary className="cursor-pointer hover:text-zinc-500 dark:hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+            Idle beep
+          </summary>
+          <p className="mt-1.5 leading-relaxed">
+            After 14.5min with no button presses, a double beep warns that the controller will sleep
+            in 30 seconds. Press any button to reset the timer.
+            <br />
+            <i>ABXY recommended, to not create log entries.</i>
+          </p>
+        </details>
       </section>
 
       <section className="flex flex-col gap-3">

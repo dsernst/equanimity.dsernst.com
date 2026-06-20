@@ -11,7 +11,7 @@ import {
   formatTimestamp,
 } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
-import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
+import { cancelIdleWarningSequenceTest, playHoldTickBeep, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
 import { KeyLogEntry, TRACKED_KEYS, TrackedKey } from '@/lib/types'
 
@@ -83,7 +83,10 @@ export default function KeyLogger() {
       return { ...e, type: 'hold' as const, durationMs: liveDurationMs }
     })
 
-    if (changed) syncEntries(next)
+    if (changed) {
+      syncEntries(next)
+      playHoldTickBeep()
+    }
   }, [syncEntries])
 
   const logKeyPress = useCallback(

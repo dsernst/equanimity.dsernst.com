@@ -9,6 +9,22 @@ function getAudioContext() {
   return audioCtx
 }
 
+/** Single soft tick — one second of hold elapsed. */
+export function playHoldTickBeep() {
+  const ctx = getAudioContext()
+  const now = ctx.currentTime
+  const osc = ctx.createOscillator()
+  const gainNode = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.value = 200
+  gainNode.gain.setValueAtTime(0.07, now)
+  gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+  osc.connect(gainNode)
+  gainNode.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.08)
+}
+
 /** Double beep — volume scales with urgency as sleep approaches. */
 export function playIdleWarningBeep(gain = 0.12) {
   const ctx = getAudioContext()

@@ -220,14 +220,19 @@ export default function KeyLogger() {
         </p>
         <details className="text-xs text-zinc-500">
           <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
-            Idle beep
+            Idle warning beeps
           </summary>
-          <p className="mt-1.5 leading-relaxed">
-            In the last 30 seconds before sleep, beeps repeat at t-30, t-20, t-15, t-10, t-6.5, and
-            t-3.5 — getting louder each time. Press any button to reset the timer.
-            <br />
-            <i>ABXY recommended, to not create log entries.</i>
-          </p>
+          <div className="mt-1.5 leading-relaxed space-y-0.5">
+            <p>Controller auto-sleeps after 15min of inactivity.</p>
+            <p>
+              So subtle warning beeps are given at 30s before (after 14m30s idleness), -20, -15,
+              -10, -6.5, -3.5.
+            </p>
+            <p>Press any controller button to reset the timer.</p>
+            <p>
+              <i>ABXY recommended to avoid new log entries.</i>
+            </p>
+          </div>
           <button
             type="button"
             onClick={toggleIdleBeepTest}

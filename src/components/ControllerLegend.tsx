@@ -47,7 +47,19 @@ const DPAD_CORNERS: Record<DpadDirection, string> = {
   left: 'rounded-l-md',
 }
 
-function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean }) {
+function DpadKey({
+  direction,
+  held,
+  interactive,
+  onKeyDown,
+  onKeyUp,
+}: {
+  direction: DpadDirection
+  held: boolean
+  interactive: boolean
+  onKeyDown: (key: TrackedKey) => void
+  onKeyUp: (key: TrackedKey) => void
+}) {
   const key = DPAD_MAP[direction]
   const position =
     direction === 'up'
@@ -59,17 +71,44 @@ function DpadKey({ direction, held }: { direction: DpadDirection; held: boolean 
           : 'col-start-2 row-start-3'
 
   return (
-    <div
-      className={`flex h-9 w-9 items-center justify-center ${DPAD_CORNERS[direction]} transition-all duration-100 ${position} ${
-        held ? `${KEY_COLORS[key]} text-white shadow-md` : 'bg-white/90 text-zinc-600'
-      }`}
+    <button
+      type="button"
+      disabled={!interactive}
+      aria-label={KEY_LABELS[key].label}
+      onPointerDown={(e) => {
+        if (!interactive) return
+        e.preventDefault()
+        e.currentTarget.setPointerCapture(e.pointerId)
+        onKeyDown(key)
+      }}
+      onPointerUp={(e) => {
+        if (!interactive) return
+        e.preventDefault()
+        onKeyUp(key)
+      }}
+      onPointerCancel={() => onKeyUp(key)}
+      className={`flex h-9 w-9 touch-none items-center justify-center ${DPAD_CORNERS[direction]} transition-all duration-100 ${position} ${
+        held
+          ? `${KEY_COLORS[key]} text-white shadow-md`
+          : 'bg-white/80 text-zinc-600 shadow-sm hover:bg-white hover:shadow-md hover:ring-2 hover:ring-black/15 active:scale-95'
+      } ${interactive ? 'cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:hover:ring-0 disabled:hover:shadow-sm' : ''}`}
     >
       <DpadArrow direction={direction} />
-    </div>
+    </button>
   )
 }
 
-function ControllerGraphic({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
+function ControllerGraphic({
+  heldKeys,
+  interactive,
+  onKeyDown,
+  onKeyUp,
+}: {
+  heldKeys: Set<TrackedKey>
+  interactive: boolean
+  onKeyDown: (key: TrackedKey) => void
+  onKeyUp: (key: TrackedKey) => void
+}) {
   return (
     <div className="flex w-full flex-col items-center gap-3">
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Controller</p>
@@ -78,11 +117,11 @@ function ControllerGraphic({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
         style={CONTROLLER_STYLE}
       >
         <div className="grid grid-cols-3 grid-rows-3">
-          <DpadKey direction="up" held={heldKeys.has('e')} />
-          <DpadKey direction="left" held={heldKeys.has('d')} />
+          <DpadKey direction="up" held={heldKeys.has('e')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+          <DpadKey direction="left" held={heldKeys.has('d')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
           <div className="col-start-2 row-start-2 h-9 w-9 bg-white/50" />
-          <DpadKey direction="right" held={heldKeys.has('c')} />
-          <DpadKey direction="down" held={heldKeys.has('f')} />
+          <DpadKey direction="right" held={heldKeys.has('c')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+          <DpadKey direction="down" held={heldKeys.has('f')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
         </div>
 
         <div className="relative mt-auto h-16 w-16">
@@ -136,10 +175,25 @@ function KeyReminders() {
   )
 }
 
-export default function ControllerLegend({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
+export default function ControllerLegend({
+  heldKeys,
+  interactive,
+  onKeyDown,
+  onKeyUp,
+}: {
+  heldKeys: Set<TrackedKey>
+  interactive: boolean
+  onKeyDown: (key: TrackedKey) => void
+  onKeyUp: (key: TrackedKey) => void
+}) {
   return (
     <div className="flex w-full flex-col items-center gap-8">
-      <ControllerGraphic heldKeys={heldKeys} />
+      <ControllerGraphic
+        heldKeys={heldKeys}
+        interactive={interactive}
+        onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
+      />
       <KeyReminders />
     </div>
   )

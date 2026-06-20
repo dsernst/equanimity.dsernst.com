@@ -67,6 +67,35 @@ export default function KeyLogger() {
     [appendEntry],
   )
 
+  const handleTrackedKeyDown = useCallback(
+    (key: TrackedKey) => {
+      if (!listening || pressStartRef.current[key]) return
+      bumpActivity()
+      pressStartRef.current[key] = Date.now()
+      setHeldKeys((prev) => new Set(prev).add(key))
+      speakLabel(KEY_LABELS[key].label)
+    },
+    [listening, bumpActivity],
+  )
+
+  const handleTrackedKeyUp = useCallback(
+    (key: TrackedKey) => {
+      if (!listening) return
+
+      const start = pressStartRef.current[key]
+      delete pressStartRef.current[key]
+      setHeldKeys((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+
+      if (!start) return
+      logKeyRelease(key, start)
+    },
+    [listening, logKeyRelease],
+  )
+
   useEffect(() => {
     const loaded = loadEntries()
     entriesRef.current = loaded
@@ -114,9 +143,7 @@ export default function KeyLogger() {
       if (!isTrackedKey(key)) return
       e.preventDefault()
 
-      pressStartRef.current[key] = Date.now()
-      setHeldKeys((prev) => new Set(prev).add(key))
-      speakLabel(KEY_LABELS[key].label)
+      handleTrackedKeyDown(key)
     }
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -124,16 +151,7 @@ export default function KeyLogger() {
       if (!isTrackedKey(key)) return
       e.preventDefault()
 
-      const start = pressStartRef.current[key]
-      delete pressStartRef.current[key]
-      setHeldKeys((prev) => {
-        const next = new Set(prev)
-        next.delete(key)
-        return next
-      })
-
-      if (!start) return
-      logKeyRelease(key, start)
+      handleTrackedKeyUp(key)
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -142,7 +160,7 @@ export default function KeyLogger() {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [listening, logKeyRelease, bumpActivity])
+  }, [listening, bumpActivity, handleTrackedKeyDown, handleTrackedKeyUp])
 
   const clearLog = () => {
     entriesRef.current = []
@@ -195,7 +213,12 @@ export default function KeyLogger() {
           </span>
         </div>
 
-        <ControllerLegend heldKeys={heldKeys} />
+        <ControllerLegend
+          heldKeys={heldKeys}
+          interactive={listening}
+          onKeyDown={handleTrackedKeyDown}
+          onKeyUp={handleTrackedKeyUp}
+        />
 
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
           Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken

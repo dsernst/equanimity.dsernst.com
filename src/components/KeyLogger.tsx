@@ -7,7 +7,7 @@ import { formatDuration, formatExportFilename, formatRelative, formatTimestamp }
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
-import { KeyEventType, KeyLogEntry, TRACKED_KEYS, TrackedKey } from '@/lib/types'
+import { KeyLogEntry, TRACKED_KEYS, TrackedKey } from '@/lib/types'
 
 const STORAGE_KEY = 'equanimity-key-log'
 
@@ -42,58 +42,74 @@ export default function KeyLogger() {
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
   const entriesRef = useRef<KeyLogEntry[]>([])
-  const pressStartRef = useRef<Partial<Record<TrackedKey, number>>>({})
+  const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
   const bumpActivity = useControllerIdleWarning(listening)
 
-  const appendEntry = useCallback((entry: KeyLogEntry) => {
-    entriesRef.current = [entry, ...entriesRef.current]
-    setEntries(entriesRef.current)
-    saveEntries(entriesRef.current)
+  const persistEntries = useCallback((next: KeyLogEntry[]) => {
+    entriesRef.current = next
+    setEntries(next)
+    saveEntries(next)
   }, [])
 
-  const logKeyRelease = useCallback(
-    (key: TrackedKey, pressStart: number) => {
-      const durationMs = Date.now() - pressStart
-      const type: KeyEventType = durationMs >= HOLD_THRESHOLD_MS ? 'hold' : 'press'
-      appendEntry({
+  const logKeyPress = useCallback(
+    (key: TrackedKey, timestamp: number) => {
+      const entry: KeyLogEntry = {
         id: crypto.randomUUID(),
         key,
         label: KEY_LABELS[key].label,
-        timestamp: pressStart,
-        type,
-        durationMs,
-      })
+        timestamp,
+        type: 'press',
+      }
+      persistEntries([entry, ...entriesRef.current])
+      return entry.id
     },
-    [appendEntry],
+    [persistEntries],
+  )
+
+  const finalizeKeyRelease = useCallback(
+    (entryId: string, pressStart: number) => {
+      const durationMs = Date.now() - pressStart
+      const isHold = durationMs >= HOLD_THRESHOLD_MS
+      persistEntries(
+        entriesRef.current.map((e) =>
+          e.id === entryId
+            ? { ...e, type: isHold ? 'hold' : 'press', durationMs: isHold ? durationMs : undefined }
+            : e,
+        ),
+      )
+    },
+    [persistEntries],
   )
 
   const handleTrackedKeyDown = useCallback(
     (key: TrackedKey) => {
-      if (!listening || pressStartRef.current[key]) return
+      if (!listening || pressRef.current[key]) return
       bumpActivity()
-      pressStartRef.current[key] = Date.now()
+      const start = Date.now()
+      const entryId = logKeyPress(key, start)
+      pressRef.current[key] = { start, entryId }
       setHeldKeys((prev) => new Set(prev).add(key))
       speakLabel(KEY_LABELS[key].label)
     },
-    [listening, bumpActivity],
+    [listening, bumpActivity, logKeyPress],
   )
 
   const handleTrackedKeyUp = useCallback(
     (key: TrackedKey) => {
       if (!listening) return
 
-      const start = pressStartRef.current[key]
-      delete pressStartRef.current[key]
+      const press = pressRef.current[key]
+      delete pressRef.current[key]
       setHeldKeys((prev) => {
         const next = new Set(prev)
         next.delete(key)
         return next
       })
 
-      if (!start) return
-      logKeyRelease(key, start)
+      if (!press) return
+      finalizeKeyRelease(press.entryId, press.start)
     },
-    [listening, logKeyRelease],
+    [listening, finalizeKeyRelease],
   )
 
   useEffect(() => {
@@ -165,7 +181,7 @@ export default function KeyLogger() {
   const clearLog = () => {
     entriesRef.current = []
     setEntries([])
-    pressStartRef.current = {}
+    pressRef.current = {}
     setHeldKeys(new Set())
     localStorage.removeItem(STORAGE_KEY)
   }
@@ -215,7 +231,7 @@ export default function KeyLogger() {
         />
 
         <p className="text-xs text-zinc-500">
-          Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
+          Each entry is logged on press; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
           feedback on press.
         </p>
         <details className="text-xs text-zinc-500">

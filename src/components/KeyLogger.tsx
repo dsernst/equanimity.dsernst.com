@@ -195,22 +195,16 @@ export default function KeyLogger() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Equanimity
-        </h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
-          Log timestamps for controller key presses
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-50">Equanimity</h1>
+        <p className="text-zinc-400">Log timestamps for controller key presses</p>
       </header>
 
-      <section className="flex flex-col gap-4 overflow-visible rounded-2xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-950">
+      <section className="flex flex-col gap-4 overflow-visible rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="flex items-center gap-2 text-sm">
           <span
             className={`h-2 w-2 rounded-full ${listening ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`}
           />
-          <span className="text-zinc-600 dark:text-zinc-300">
-            {listening ? 'Listening' : 'Paused'}
-          </span>
+          <span className="text-zinc-300">{listening ? 'Listening' : 'Paused'}</span>
         </div>
 
         <ControllerLegend
@@ -220,12 +214,12 @@ export default function KeyLogger() {
           onKeyUp={handleTrackedKeyUp}
         />
 
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="text-xs text-zinc-500">
           Each entry is logged on release; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
           feedback on press.
         </p>
-        <details className="text-xs text-zinc-400 dark:text-zinc-500">
-          <summary className="cursor-pointer hover:text-zinc-500 dark:hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+        <details className="text-xs text-zinc-500">
+          <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
             Idle beep
           </summary>
           <p className="mt-1.5 leading-relaxed">
@@ -237,7 +231,7 @@ export default function KeyLogger() {
           <button
             type="button"
             onClick={toggleIdleBeepTest}
-            className="mt-2 cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm tabular-nums text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="mt-2 cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
           >
             {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
           </button>
@@ -252,41 +246,41 @@ export default function KeyLogger() {
           <div className="flex gap-2">
             <button
               onClick={() => setListening((v) => !v)}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
             >
               {listening ? 'Pause' : 'Resume'}
             </button>
             <button
               onClick={exportLog}
               disabled={entries.length === 0}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 disabled:dark:hover:bg-transparent"
+              className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
             >
               Export
             </button>
             <button
               onClick={clearLog}
               disabled={entries.length === 0}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-zinc-700 dark:hover:bg-red-950/30 disabled:dark:hover:bg-transparent"
+              className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-red-400 transition hover:bg-red-950/30 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
             >
               Clear
             </button>
           </div>
         </div>
 
-        <div className="max-h-96 overflow-y-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <div className="max-h-96 overflow-y-auto rounded-xl border border-zinc-800">
           {entries.length === 0 ? (
             <p className="p-8 text-center text-sm text-zinc-400">
               No presses logged yet. Press a key on your controller.
             </p>
           ) : (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="divide-y divide-zinc-800">
               {entries.map((entry, i) => {
                 const prev = entries[i + 1]
                 const relative = prev ? formatRelative(prev.timestamp, entry.timestamp) : null
 
                 return (
                   <li key={entry.id} className="flex items-center gap-4 px-4 py-2.5 text-sm">
-                    <span className="w-28 shrink-0 font-mono text-zinc-500 dark:text-zinc-400">
+                    <span className="w-28 shrink-0 font-mono text-zinc-400">
                       {formatTimestamp(entry.timestamp)}
                     </span>
                     {sessionStart && i === entries.length - 1 && (
@@ -297,13 +291,9 @@ export default function KeyLogger() {
                     <span
                       className={`inline-block h-2 w-2 shrink-0 rounded-full ${KEY_COLORS[entry.key]}`}
                     />
-                    <span className="font-medium text-zinc-800 dark:text-zinc-100">
-                      &ldquo;{entry.label}&rdquo;
-                    </span>
+                    <span className="font-medium text-zinc-100">&ldquo;{entry.label}&rdquo;</span>
                     {entry.type === 'hold' && entry.durationMs !== undefined && (
-                      <span className="text-zinc-500 dark:text-zinc-400">
-                        held {formatDuration(entry.durationMs)}
-                      </span>
+                      <span className="text-zinc-400">held {formatDuration(entry.durationMs)}</span>
                     )}
                   </li>
                 )

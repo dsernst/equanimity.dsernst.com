@@ -161,7 +161,7 @@ function KeyReminders() {
               <div>
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                   <span className="text-zinc-400">{direction}</span>
-                  <span className="font-medium text-zinc-800 dark:text-zinc-100">
+                  <span className="font-medium text-zinc-100">
                     &ldquo;{label}&rdquo;
                   </span>
                 </div>

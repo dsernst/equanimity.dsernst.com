@@ -259,14 +259,14 @@ export default function KeyLogger() {
             <button
               onClick={exportLog}
               disabled={entries.length === 0}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-default disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 disabled:dark:hover:bg-transparent"
             >
               Export
             </button>
             <button
               onClick={clearLog}
               disabled={entries.length === 0}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-default disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-red-950/30"
+              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent dark:border-zinc-700 dark:hover:bg-red-950/30 disabled:dark:hover:bg-transparent"
             >
               Clear
             </button>

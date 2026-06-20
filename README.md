@@ -19,7 +19,7 @@ On press, the label is spoken aloud. Holds longer than 400ms are recorded as hol
 
 ## Controller setup
 
-Tested with an [**8BitDo Micro**](https://www.amazon.com/dp/B0CDG2HKBF/ref=twister_B0F1MXKKVV?_encoding=UTF8&psc=1) in keyboard mode, rotated so the D-pad is on top. Other bluetooth controllers should work too, and be easy to adapt. Reach out if interested.
+Tested with an [**8BitDo Micro**](https://www.amazon.com/dp/B0CDG2HKBF/) in keyboard mode, rotated so the D-pad is on top. Other bluetooth controllers should work too, and be easy to adapt. Reach out if interested.
 
 ## Development
 

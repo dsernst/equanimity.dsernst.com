@@ -93,7 +93,15 @@ function ControllerGraphic({ heldKeys }: { heldKeys: Set<TrackedKey> }) {
         </div>
       </div>
       <p className="text-center text-[10px] leading-snug text-zinc-400">
-        8BitDo — rotated, D-pad on top
+        <a
+          href="https://www.amazon.com/dp/B0CDG2HKBF/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          8BitDo
+        </a>{' '}
+        — rotated, D-pad on top
       </p>
     </div>
   )

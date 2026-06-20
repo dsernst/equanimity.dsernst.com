@@ -237,7 +237,7 @@ export default function KeyLogger() {
           <button
             type="button"
             onClick={toggleIdleBeepTest}
-            className="mt-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm tabular-nums text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="mt-2 cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm tabular-nums text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
           >
             {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
           </button>
@@ -252,21 +252,21 @@ export default function KeyLogger() {
           <div className="flex gap-2">
             <button
               onClick={() => setListening((v) => !v)}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               {listening ? 'Pause' : 'Resume'}
             </button>
             <button
               onClick={exportLog}
               disabled={entries.length === 0}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-default disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Export
             </button>
             <button
               onClick={clearLog}
               disabled={entries.length === 0}
-              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-red-950/30"
+              className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-default disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-red-950/30"
             >
               Clear
             </button>

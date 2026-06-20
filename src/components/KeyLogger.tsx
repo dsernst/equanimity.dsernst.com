@@ -3,7 +3,13 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
-import { formatDuration, formatExportFilename, formatRelative, formatTimestamp } from '@/lib/format'
+import {
+  formatDuration,
+  formatExportFilename,
+  formatHoldDurationLive,
+  formatRelative,
+  formatTimestamp,
+} from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
@@ -38,6 +44,7 @@ function saveEntries(entries: KeyLogEntry[]) {
 export default function KeyLogger() {
   const [entries, setEntries] = useState<KeyLogEntry[]>([])
   const [heldKeys, setHeldKeys] = useState<Set<TrackedKey>>(new Set())
+  const [activeHoldEntryIds, setActiveHoldEntryIds] = useState<Set<string>>(new Set())
   const [listening, setListening] = useState(true)
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
@@ -50,6 +57,34 @@ export default function KeyLogger() {
     setEntries(next)
     saveEntries(next)
   }, [])
+
+  const syncEntries = useCallback((next: KeyLogEntry[]) => {
+    entriesRef.current = next
+    setEntries(next)
+  }, [])
+
+  const updateActiveHolds = useCallback(() => {
+    const presses = Object.values(pressRef.current)
+    if (presses.length === 0) return
+
+    const now = Date.now()
+    let changed = false
+    const next = entriesRef.current.map((e) => {
+      const press = presses.find((p) => p.entryId === e.id)
+      if (!press) return e
+
+      const elapsed = now - press.start
+      if (elapsed < 1000) return e
+
+      const liveDurationMs = Math.floor(elapsed / 1000) * 1000
+      if (e.type === 'hold' && e.durationMs === liveDurationMs) return e
+
+      changed = true
+      return { ...e, type: 'hold' as const, durationMs: liveDurationMs }
+    })
+
+    if (changed) syncEntries(next)
+  }, [syncEntries])
 
   const logKeyPress = useCallback(
     (key: TrackedKey, timestamp: number) => {
@@ -89,6 +124,7 @@ export default function KeyLogger() {
       const entryId = logKeyPress(key, start)
       pressRef.current[key] = { start, entryId }
       setHeldKeys((prev) => new Set(prev).add(key))
+      setActiveHoldEntryIds((prev) => new Set(prev).add(entryId))
       speakLabel(KEY_LABELS[key].label)
     },
     [listening, bumpActivity, logKeyPress],
@@ -105,12 +141,26 @@ export default function KeyLogger() {
         next.delete(key)
         return next
       })
+      if (press) {
+        setActiveHoldEntryIds((prev) => {
+          const next = new Set(prev)
+          next.delete(press.entryId)
+          return next
+        })
+      }
 
       if (!press) return
       finalizeKeyRelease(press.entryId, press.start)
     },
     [listening, finalizeKeyRelease],
   )
+
+  useEffect(() => {
+    if (heldKeys.size === 0) return
+
+    const id = window.setInterval(updateActiveHolds, 1000)
+    return () => window.clearInterval(id)
+  }, [heldKeys.size, updateActiveHolds])
 
   useEffect(() => {
     const loaded = loadEntries()
@@ -183,6 +233,7 @@ export default function KeyLogger() {
     setEntries([])
     pressRef.current = {}
     setHeldKeys(new Set())
+    setActiveHoldEntryIds(new Set())
     localStorage.removeItem(STORAGE_KEY)
   }
 
@@ -298,6 +349,7 @@ export default function KeyLogger() {
               {entries.map((entry, i) => {
                 const prev = entries[i + 1]
                 const relative = prev ? formatRelative(prev.timestamp, entry.timestamp) : null
+                const activelyHeld = activeHoldEntryIds.has(entry.id)
 
                 return (
                   <li key={entry.id} className="flex items-center gap-4 px-4 py-2.5 text-sm">
@@ -314,7 +366,12 @@ export default function KeyLogger() {
                     />
                     <span className="font-medium text-zinc-100">&ldquo;{entry.label}&rdquo;</span>
                     {entry.type === 'hold' && entry.durationMs !== undefined && (
-                      <span className="text-zinc-400">held {formatDuration(entry.durationMs)}</span>
+                      <span className="text-zinc-400">
+                        held{' '}
+                        {activelyHeld
+                          ? formatHoldDurationLive(entry.durationMs)
+                          : formatDuration(entry.durationMs)}
+                      </span>
                     )}
                   </li>
                 )

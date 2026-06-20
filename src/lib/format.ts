@@ -17,6 +17,11 @@ export function formatDuration(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
+/** Whole seconds while a key is still held. */
+export function formatHoldDurationLive(ms: number): string {
+  return `${Math.floor(ms / 1000)}s`
+}
+
 /** Local datetime for export filenames, e.g. `2026-06-19T17_07_29.tsv` */
 export function formatExportFilename(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0')

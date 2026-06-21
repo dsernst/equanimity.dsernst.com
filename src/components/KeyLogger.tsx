@@ -13,13 +13,9 @@ import {
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
 import { cancelIdleWarningSequenceTest, playHoldTickBeep, playIdleWarningSequenceTest } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
-import { KeyLogEntry, TRACKED_KEYS, TrackedKey } from '@/lib/types'
+import { KeyLogEntry, resolveTrackedKey, TrackedKey } from '@/lib/types'
 
 const STORAGE_KEY = 'equanimity-key-log'
-
-function isTrackedKey(key: string): key is TrackedKey {
-  return TRACKED_KEYS.includes(key as TrackedKey)
-}
 
 function loadEntries(): KeyLogEntry[] {
   if (typeof window === 'undefined') return []
@@ -208,16 +204,16 @@ export default function KeyLogger() {
       if (e.repeat) return
       bumpActivity()
 
-      const key = e.key.toLowerCase()
-      if (!isTrackedKey(key)) return
+      const key = resolveTrackedKey(e.key)
+      if (!key) return
       e.preventDefault()
 
       handleTrackedKeyDown(key)
     }
 
     const onKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase()
-      if (!isTrackedKey(key)) return
+      const key = resolveTrackedKey(e.key)
+      if (!key) return
       e.preventDefault()
 
       handleTrackedKeyUp(key)

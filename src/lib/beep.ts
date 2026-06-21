@@ -17,7 +17,7 @@ export function playHoldTickBeep() {
   const gainNode = ctx.createGain()
   osc.type = 'sine'
   osc.frequency.value = 200
-  gainNode.gain.setValueAtTime(0.07, now)
+  gainNode.gain.setValueAtTime(0.15, now) // Volume
   gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
   osc.connect(gainNode)
   gainNode.connect(ctx.destination)

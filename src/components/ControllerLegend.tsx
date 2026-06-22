@@ -161,9 +161,7 @@ function DpadCross() {
 
 function DpadGrid({
   heldKeys,
-  interactive,
-  onKeyDown,
-  onKeyUp,
+  ...handlers
 }: {
   heldKeys: Set<TrackedKey>
   interactive: boolean
@@ -174,10 +172,10 @@ function DpadGrid({
     <div className="relative h-24 w-24 shrink-0 sm:h-27 sm:w-27">
       <DpadCross />
       <div className="relative grid h-full w-full grid-cols-3 grid-rows-3">
-        <DpadKey direction="up" held={heldKeys.has('e')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-        <DpadKey direction="left" held={heldKeys.has('d')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-        <DpadKey direction="right" held={heldKeys.has('c')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-        <DpadKey direction="down" held={heldKeys.has('f')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+        <DpadKey direction="up" held={heldKeys.has('e')} {...handlers} />
+        <DpadKey direction="left" held={heldKeys.has('d')} {...handlers} />
+        <DpadKey direction="right" held={heldKeys.has('c')} {...handlers} />
+        <DpadKey direction="down" held={heldKeys.has('f')} {...handlers} />
       </div>
     </div>
   )
@@ -194,12 +192,7 @@ function AbxyCluster() {
   )
 }
 
-function CompactController({
-  heldKeys,
-  interactive,
-  onKeyDown,
-  onKeyUp,
-}: {
+function CompactController(props: {
   heldKeys: Set<TrackedKey>
   interactive: boolean
   onKeyDown: (key: TrackedKey) => void
@@ -215,12 +208,7 @@ function CompactController({
           className="shrink-0 rounded-3xl p-2 shadow-inner sm:p-2.5"
           style={{ backgroundColor: CONTROLLER_GREEN }}
         >
-          <DpadGrid
-            heldKeys={heldKeys}
-            interactive={interactive}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
-          />
+          <DpadGrid {...props} />
         </div>
         <KeyHint direction="right" />
       </div>
@@ -259,12 +247,7 @@ function KeyReminders() {
   )
 }
 
-function FullController({
-  heldKeys,
-  interactive,
-  onKeyDown,
-  onKeyUp,
-}: {
+function FullController(props: {
   heldKeys: Set<TrackedKey>
   interactive: boolean
   onKeyDown: (key: TrackedKey) => void
@@ -276,12 +259,7 @@ function FullController({
         className="relative flex flex-col items-center rounded-4xl px-4 py-5 shadow-inner"
         style={FULL_CONTROLLER_STYLE}
       >
-        <DpadGrid
-          heldKeys={heldKeys}
-          interactive={interactive}
-          onKeyDown={onKeyDown}
-          onKeyUp={onKeyUp}
-        />
+        <DpadGrid {...props} />
         <AbxyCluster />
       </div>
 
@@ -311,6 +289,7 @@ export default function ControllerLegend({
   onKeyDown: (key: TrackedKey) => void
   onKeyUp: (key: TrackedKey) => void
 }) {
+  const dpadProps = { heldKeys, interactive, onKeyDown, onKeyUp }
   const [view, setView] = useState<ViewMode>('full')
 
   useEffect(() => {
@@ -335,9 +314,7 @@ export default function ControllerLegend({
             type="button"
             onClick={() => selectView('full')}
             className={`cursor-pointer rounded-md px-2 py-0.5 transition ${
-              view === 'full'
-                ? 'bg-zinc-800 text-zinc-200'
-                : 'text-zinc-500 hover:text-zinc-300'
+              view === 'full' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Full
@@ -346,9 +323,7 @@ export default function ControllerLegend({
             type="button"
             onClick={() => selectView('compact')}
             className={`cursor-pointer rounded-md px-2 py-0.5 transition ${
-              view === 'compact'
-                ? 'bg-zinc-800 text-zinc-200'
-                : 'text-zinc-500 hover:text-zinc-300'
+              view === 'compact' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Compact
@@ -357,24 +332,13 @@ export default function ControllerLegend({
       </div>
 
       {view === 'compact' ? (
-        <CompactController
-          heldKeys={heldKeys}
-          interactive={interactive}
-          onKeyDown={onKeyDown}
-          onKeyUp={onKeyUp}
-        />
+        <CompactController {...dpadProps} />
       ) : (
         <div className="flex w-full flex-col items-center gap-8">
-          <FullController
-            heldKeys={heldKeys}
-            interactive={interactive}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
-          />
+          <FullController {...dpadProps} />
           <KeyReminders />
         </div>
       )}
-
     </div>
   )
 }

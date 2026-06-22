@@ -3,22 +3,16 @@
 import { startTransition, useCallback, useEffect, useState } from 'react'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
 import { cancelIdleWarningSequenceTest, playIdleWarningSequenceTest } from '@/lib/beep'
+import { readLocalStorage, writeLocalStorage } from '@/lib/localStorage'
 
 const STORAGE_KEY = 'equanimity-idle-warning-beeps'
 
 function loadEnabled(): boolean {
-  if (typeof window === 'undefined') return true
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw === null) return true
-    return raw === 'true'
-  } catch {
-    return true
-  }
+  return readLocalStorage(STORAGE_KEY, 'true') === 'true'
 }
 
 function saveEnabled(enabled: boolean) {
-  localStorage.setItem(STORAGE_KEY, String(enabled))
+  writeLocalStorage(STORAGE_KEY, String(enabled))
 }
 
 export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void) {

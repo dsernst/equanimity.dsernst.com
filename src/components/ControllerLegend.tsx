@@ -2,6 +2,7 @@
 
 import { startTransition, useEffect, useState } from 'react'
 import { DIRECTION_LABELS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
+import { readLocalStorage, writeLocalStorage } from '@/lib/localStorage'
 import { TrackedKey } from '@/lib/types'
 
 type DpadDirection = 'up' | 'right' | 'down' | 'left'
@@ -25,18 +26,12 @@ const FULL_CONTROLLER_STYLE = {
 } as const
 
 function loadViewMode(): ViewMode {
-  if (typeof window === 'undefined') return 'full'
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw === 'compact') return 'compact'
-    return 'full'
-  } catch {
-    return 'full'
-  }
+  const raw = readLocalStorage(STORAGE_KEY, 'full')
+  return raw === 'compact' ? 'compact' : 'full'
 }
 
 function saveViewMode(mode: ViewMode) {
-  localStorage.setItem(STORAGE_KEY, mode)
+  writeLocalStorage(STORAGE_KEY, mode)
 }
 
 function KeyHint({ direction }: { direction: DpadDirection }) {

@@ -172,10 +172,9 @@ function DpadGrid({
     <div className="relative h-24 w-24 shrink-0 sm:h-27 sm:w-27">
       <DpadCross />
       <div className="relative grid h-full w-full grid-cols-3 grid-rows-3">
-        <DpadKey direction="up" held={heldKeys.has('e')} {...handlers} />
-        <DpadKey direction="left" held={heldKeys.has('d')} {...handlers} />
-        <DpadKey direction="right" held={heldKeys.has('c')} {...handlers} />
-        <DpadKey direction="down" held={heldKeys.has('f')} {...handlers} />
+        {(Object.entries(DPAD_MAP) as [DpadDirection, TrackedKey][]).map(([direction, key]) => (
+          <DpadKey key={direction} direction={direction} held={heldKeys.has(key)} {...handlers} />
+        ))}
       </div>
     </div>
   )

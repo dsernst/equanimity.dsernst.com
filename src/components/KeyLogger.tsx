@@ -3,6 +3,7 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
+import { useTouchAudioGate } from '@/hooks/useTouchAudioGate'
 import {
   formatDuration,
   formatExportFilename,
@@ -11,7 +12,11 @@ import {
   formatTimestamp,
 } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
-import { cancelIdleWarningSequenceTest, playHoldTickBeep, playIdleWarningSequenceTest } from '@/lib/beep'
+import {
+  cancelIdleWarningSequenceTest,
+  playHoldTickBeep,
+  playIdleWarningSequenceTest,
+} from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
 import { KeyLogEntry, resolveTrackedKey, TrackedKey } from '@/lib/types'
 
@@ -45,6 +50,7 @@ export default function KeyLogger() {
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
   const [insecureContext, setInsecureContext] = useState(false)
+  const { needsAudioGate, enableAudio } = useTouchAudioGate()
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
   const bumpActivity = useControllerIdleWarning(listening)
@@ -119,6 +125,7 @@ export default function KeyLogger() {
   const handleTrackedKeyDown = useCallback(
     (key: TrackedKey) => {
       if (!listening || pressRef.current[key]) return
+      enableAudio()
       bumpActivity()
       const start = Date.now()
       const entryId = logKeyPress(key, start)
@@ -127,7 +134,7 @@ export default function KeyLogger() {
       setActiveHoldEntryIds((prev) => new Set(prev).add(entryId))
       speakLabel(KEY_LABELS[key].label)
     },
-    [listening, bumpActivity, logKeyPress],
+    [listening, bumpActivity, logKeyPress, enableAudio],
   )
 
   const handleTrackedKeyUp = useCallback(
@@ -180,10 +187,8 @@ export default function KeyLogger() {
   }
 
   const toggleIdleBeepTest = () => {
-    if (idleBeepTesting) {
-      stopIdleBeepTest()
-      return
-    }
+    if (idleBeepTesting) return stopIdleBeepTest()
+    enableAudio()
     setIdleBeepTestSecs(30)
     setIdleBeepTesting(true)
     playIdleWarningSequenceTest(stopIdleBeepTest)
@@ -287,40 +292,54 @@ export default function KeyLogger() {
           </p>
         )}
 
-        <ControllerLegend
-          heldKeys={heldKeys}
-          interactive={listening}
-          onKeyDown={handleTrackedKeyDown}
-          onKeyUp={handleTrackedKeyUp}
-        />
-
-        <p className="text-xs text-zinc-500">
-          Each entry is logged on press; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
-          feedback on press.
-        </p>
-        <details className="text-xs text-zinc-500">
-          <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
-            Idle warning beeps
-          </summary>
-          <div className="mt-1.5 leading-relaxed space-y-0.5">
-            <p>Controller auto-sleeps after 15min of inactivity.</p>
-            <p>
-              So subtle warning beeps are given at 30s before (after 14m30s idleness), -20, -15,
-              -10, -6.5, -3.5.
-            </p>
-            <p>Press any controller button to reset the timer.</p>
-            <p>
-              <i>ABXY recommended to avoid new log entries.</i>
-            </p>
+        {needsAudioGate ? (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <button
+              type="button"
+              onClick={enableAudio}
+              className="cursor-pointer rounded-xl bg-lime-600 px-8 py-3 text-sm font-medium text-white transition"
+            >
+              Enable audio feedback
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={toggleIdleBeepTest}
-            className="mt-2 cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
-          >
-            {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
-          </button>
-        </details>
+        ) : (
+          <>
+            <ControllerLegend
+              heldKeys={heldKeys}
+              interactive={listening}
+              onKeyDown={handleTrackedKeyDown}
+              onKeyUp={handleTrackedKeyUp}
+            />
+
+            <p className="text-xs text-zinc-500">
+              Each entry is logged on press; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
+              feedback on press.
+            </p>
+            <details className="text-xs text-zinc-500">
+              <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+                Idle warning beeps
+              </summary>
+              <div className="mt-1.5 leading-relaxed space-y-0.5">
+                <p>Controller auto-sleeps after 15min of inactivity.</p>
+                <p>
+                  So subtle warning beeps are given at 30s before (after 14m30s idleness), -20, -15,
+                  -10, -6.5, -3.5.
+                </p>
+                <p>Press any controller button to reset the timer.</p>
+                <p>
+                  <i>ABXY recommended to avoid new log entries.</i>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleIdleBeepTest}
+                className="mt-2 cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
+              >
+                {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
+              </button>
+            </details>
+          </>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">

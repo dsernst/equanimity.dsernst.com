@@ -1,0 +1,41 @@
+import { useCallback, useEffect, useState } from 'react'
+
+function isLikelyTouchDevice() {
+  if (typeof window === 'undefined') return false
+  return navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches
+}
+
+let speechPrimed = false
+
+/** Must run synchronously inside a user gesture (click, touchend, keydown). Never throws. */
+function unlockAudioSession() {
+  if (typeof window === 'undefined') return
+
+  if (speechPrimed || !window.speechSynthesis) return
+  speechPrimed = true
+  window.speechSynthesis.getVoices()
+  const utterance = new SpeechSynthesisUtterance('\u200b')
+  utterance.volume = 0.01
+  utterance.rate = 10
+  window.speechSynthesis.speak(utterance)
+}
+
+export function useTouchAudioGate() {
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const [audioReady, setAudioReady] = useState(false)
+
+  useEffect(() => {
+    setIsTouchDevice(isLikelyTouchDevice())
+  }, [])
+
+  const enableAudio = useCallback(() => {
+    unlockAudioSession()
+    setAudioReady(true)
+  }, [])
+
+  return {
+    isTouchDevice,
+    needsAudioGate: isTouchDevice && !audioReady,
+    enableAudio,
+  }
+}

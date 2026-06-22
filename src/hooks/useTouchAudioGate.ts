@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useClientSnapshot } from '@/hooks/useClientSnapshot'
 
 function isLikelyTouchDevice() {
   if (typeof window === 'undefined') return false
@@ -21,12 +22,8 @@ function unlockAudioSession() {
 }
 
 export function useTouchAudioGate() {
-  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const isTouchDevice = useClientSnapshot(isLikelyTouchDevice, false)
   const [audioReady, setAudioReady] = useState(false)
-
-  useEffect(() => {
-    setIsTouchDevice(isLikelyTouchDevice())
-  }, [])
 
   const enableAudio = useCallback(() => {
     unlockAudioSession()

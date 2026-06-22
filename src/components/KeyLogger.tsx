@@ -3,6 +3,7 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
 import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
+import { useClientSnapshot } from '@/hooks/useClientSnapshot'
 import { useTouchAudioGate } from '@/hooks/useTouchAudioGate'
 import {
   formatDuration,
@@ -49,7 +50,7 @@ export default function KeyLogger() {
   const [listening, setListening] = useState(true)
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
-  const [insecureContext, setInsecureContext] = useState(false)
+  const insecureContext = useClientSnapshot(() => !window.isSecureContext, false)
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
@@ -173,10 +174,6 @@ export default function KeyLogger() {
     const loaded = loadEntries()
     entriesRef.current = loaded
     startTransition(() => setEntries(loaded))
-  }, [])
-
-  useEffect(() => {
-    setInsecureContext(typeof window !== 'undefined' && !window.isSecureContext)
   }, [])
 
   useEffect(() => () => cancelIdleWarningSequenceTest(), [])

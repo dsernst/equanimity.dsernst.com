@@ -8,13 +8,13 @@ export default function AppleIcon() {
     <svg width="180" height="180" viewBox="0 0 32 32">
       <rect width="32" height="32" rx="8" fill="#8bdf63" />
       <path
-        d="M16 10.5 L22 21 H10 Z"
+        d="M16 9.5 L22 20 H10 Z"
         fill="none"
         stroke="rgba(0, 0, 0, 0.5)"
         strokeWidth="0.8"
         strokeLinejoin="round"
       />
-      <path d="M16 10.5 L22 21 H10 Z" fill="#ededed" />
+      <path d="M16 9.5 L22 20 H10 Z" fill="#ededed" />
     </svg>,
     { ...size },
   )

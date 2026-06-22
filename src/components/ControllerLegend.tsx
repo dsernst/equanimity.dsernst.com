@@ -41,8 +41,8 @@ function KeyHint({ direction }: { direction: DpadDirection }) {
 
   return (
     <div
-      className={`flex shrink-0 flex-col gap-0.5 text-[11px] leading-snug ${
-        isSide ? 'w-19' : 'max-w-36'
+      className={`flex min-w-0 flex-col gap-0.5 text-[10px] leading-snug sm:text-[11px] ${
+        isSide ? 'flex-1' : 'max-w-36'
       } ${
         direction === 'left'
           ? 'items-end text-right'
@@ -131,14 +131,31 @@ function DpadKey({
         onKeyUp(key)
       }}
       onPointerCancel={() => onKeyUp(key)}
-      className={`flex h-9 w-9 touch-none items-center justify-center ${DPAD_CORNERS[direction]} transition-all duration-100 ${position} ${
+      className={`relative z-10 flex h-8 w-8 touch-none items-center justify-center sm:h-9 sm:w-9 ${DPAD_CORNERS[direction]} transition-all duration-100 ${position} ${
         held
           ? `${KEY_COLORS[key]} text-white shadow-md`
-          : 'bg-white/80 text-zinc-600 shadow-sm hover:bg-white hover:shadow-md hover:ring-2 hover:ring-black/15 active:scale-95'
-      } ${interactive ? 'cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:hover:ring-0 disabled:hover:shadow-sm' : ''}`}
+          : 'bg-transparent text-zinc-600 hover:bg-white/40 hover:ring-2 hover:ring-black/15 active:scale-95'
+      } ${interactive ? 'cursor-pointer disabled:cursor-default disabled:opacity-60 disabled:hover:ring-0' : ''}`}
     >
       <DpadArrow direction={direction} />
     </button>
+  )
+}
+
+function DpadCross() {
+  const arm = 'absolute bg-white/80 shadow-sm'
+  const cell = 'h-8 w-8 sm:h-9 sm:w-9'
+
+  return (
+    <div className="pointer-events-none absolute inset-0" aria-hidden>
+      <div className={`${arm} ${cell} left-1/2 top-0 -translate-x-1/2 rounded-t-md`} />
+      <div className={`${arm} ${cell} bottom-0 left-1/2 -translate-x-1/2 rounded-b-md`} />
+      <div className={`${arm} ${cell} left-0 top-1/2 -translate-y-1/2 rounded-l-md`} />
+      <div className={`${arm} ${cell} right-0 top-1/2 -translate-y-1/2 rounded-r-md`} />
+      <div
+        className={`absolute left-1/2 top-1/2 ${cell} -translate-x-1/2 -translate-y-1/2 scale-[1.04] bg-white/50`}
+      />
+    </div>
   )
 }
 
@@ -154,12 +171,14 @@ function DpadGrid({
   onKeyUp: (key: TrackedKey) => void
 }) {
   return (
-    <div className="grid shrink-0 grid-cols-3 grid-rows-3">
-      <DpadKey direction="up" held={heldKeys.has('e')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-      <DpadKey direction="left" held={heldKeys.has('d')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-      <div className="col-start-2 row-start-2 h-9 w-9 bg-white/50" />
-      <DpadKey direction="right" held={heldKeys.has('c')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
-      <DpadKey direction="down" held={heldKeys.has('f')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+    <div className="relative h-24 w-24 shrink-0 sm:h-27 sm:w-27">
+      <DpadCross />
+      <div className="relative grid h-full w-full grid-cols-3 grid-rows-3">
+        <DpadKey direction="up" held={heldKeys.has('e')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+        <DpadKey direction="left" held={heldKeys.has('d')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+        <DpadKey direction="right" held={heldKeys.has('c')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+        <DpadKey direction="down" held={heldKeys.has('f')} interactive={interactive} onKeyDown={onKeyDown} onKeyUp={onKeyUp} />
+      </div>
     </div>
   )
 }
@@ -187,13 +206,13 @@ function CompactController({
   onKeyUp: (key: TrackedKey) => void
 }) {
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full max-w-sm flex-col items-center">
       <KeyHint direction="up" />
 
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex w-full items-center gap-1.5 px-1 sm:gap-3 sm:px-0">
         <KeyHint direction="left" />
         <div
-          className="rounded-3xl p-2.5 shadow-inner"
+          className="shrink-0 rounded-3xl p-2 shadow-inner sm:p-2.5"
           style={{ backgroundColor: CONTROLLER_GREEN }}
         >
           <DpadGrid

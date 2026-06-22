@@ -44,6 +44,7 @@ export default function KeyLogger() {
   const [listening, setListening] = useState(true)
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
+  const [insecureContext, setInsecureContext] = useState(false)
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
   const bumpActivity = useControllerIdleWarning(listening)
@@ -167,6 +168,10 @@ export default function KeyLogger() {
     startTransition(() => setEntries(loaded))
   }, [])
 
+  useEffect(() => {
+    setInsecureContext(typeof window !== 'undefined' && !window.isSecureContext)
+  }, [])
+
   useEffect(() => () => cancelIdleWarningSequenceTest(), [])
 
   const stopIdleBeepTest = () => {
@@ -272,6 +277,15 @@ export default function KeyLogger() {
           />
           <span className="text-zinc-300">{listening ? 'Listening' : 'Paused'}</span>
         </div>
+
+        {insecureContext && (
+          <p className="rounded-lg border border-amber-800/60 bg-amber-950/40 px-3 py-2 text-xs leading-relaxed text-amber-200/90">
+            Audio requires a secure connection.{' '}
+            <code className="text-amber-100">http://192.168…</code> blocks Web Audio and speech on
+            many browsers. Use <code className="text-amber-100">npm run dev:https</code> (HTTPS) for
+            phone testing, or deploy to production.
+          </p>
+        )}
 
         <ControllerLegend
           heldKeys={heldKeys}

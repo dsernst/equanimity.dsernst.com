@@ -50,11 +50,12 @@ export default function KeyLogger() {
   const [listening, setListening] = useState(true)
   const [idleBeepTesting, setIdleBeepTesting] = useState(false)
   const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
+  const [idleWarningBeepsEnabled, setIdleWarningBeepsEnabled] = useState(true)
   const insecureContext = useClientSnapshot(() => !window.isSecureContext, false)
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
-  const bumpActivity = useControllerIdleWarning(listening)
+  const bumpActivity = useControllerIdleWarning(listening && idleWarningBeepsEnabled)
 
   const persistEntries = useCallback((next: KeyLogEntry[]) => {
     entriesRef.current = next
@@ -181,6 +182,11 @@ export default function KeyLogger() {
   const stopIdleBeepTest = () => {
     cancelIdleWarningSequenceTest()
     setIdleBeepTesting(false)
+  }
+
+  const toggleIdleWarningBeeps = () => {
+    if (idleWarningBeepsEnabled && idleBeepTesting) stopIdleBeepTest()
+    setIdleWarningBeepsEnabled((v) => !v)
   }
 
   const toggleIdleBeepTest = () => {
@@ -314,7 +320,7 @@ export default function KeyLogger() {
             </p>
             <details className="text-xs text-zinc-500">
               <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
-                Idle warning beeps
+                Idle warning beeps{!idleWarningBeepsEnabled ? ' (disabled)' : ''}
               </summary>
               <div className="mt-1.5 leading-relaxed space-y-0.5">
                 <p>Controller auto-sleeps after 15min of inactivity.</p>
@@ -327,13 +333,22 @@ export default function KeyLogger() {
                   <i>ABXY recommended to avoid new log entries.</i>
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={toggleIdleBeepTest}
-                className="mt-2 cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
-              >
-                {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
-              </button>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={toggleIdleWarningBeeps}
+                  className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
+                >
+                  {idleWarningBeepsEnabled ? 'Disable' : 'Enable'}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleIdleBeepTest}
+                  className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
+                >
+                  {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
+                </button>
+              </div>
             </details>
           </>
         )}

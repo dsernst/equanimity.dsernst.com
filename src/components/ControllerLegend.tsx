@@ -310,24 +310,18 @@ export default function ControllerLegend({
           role="group"
           aria-label="Controller view"
         >
-          <button
-            type="button"
-            onClick={() => selectView('full')}
-            className={`cursor-pointer rounded-md px-2 py-0.5 transition ${
-              view === 'full' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            Full
-          </button>
-          <button
-            type="button"
-            onClick={() => selectView('compact')}
-            className={`cursor-pointer rounded-md px-2 py-0.5 transition ${
-              view === 'compact' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            Compact
-          </button>
+          {(['full', 'compact'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => selectView(mode)}
+              className={`cursor-pointer rounded-md px-2 py-0.5 transition ${
+                view === mode ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 

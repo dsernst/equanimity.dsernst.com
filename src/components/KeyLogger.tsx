@@ -2,7 +2,7 @@
 
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import ControllerLegend from '@/components/ControllerLegend'
-import { useControllerIdleWarning } from '@/hooks/useControllerIdleWarning'
+import { IdleWarningBeeps, useIdleWarningBeeps } from '@/components/IdleWarningBeeps'
 import { useClientSnapshot } from '@/hooks/useClientSnapshot'
 import { useTouchAudioGate } from '@/hooks/useTouchAudioGate'
 import {
@@ -13,11 +13,7 @@ import {
   formatTimestamp,
 } from '@/lib/format'
 import { HOLD_THRESHOLD_MS, KEY_COLORS, KEY_LABELS } from '@/lib/constants'
-import {
-  cancelIdleWarningSequenceTest,
-  playHoldTickBeep,
-  playIdleWarningSequenceTest,
-} from '@/lib/beep'
+import { playHoldTickBeep } from '@/lib/beep'
 import { speakLabel } from '@/lib/speech'
 import { KeyLogEntry, resolveTrackedKey, TrackedKey } from '@/lib/types'
 
@@ -48,14 +44,12 @@ export default function KeyLogger() {
   const [heldKeys, setHeldKeys] = useState<Set<TrackedKey>>(new Set())
   const [activeHoldEntryIds, setActiveHoldEntryIds] = useState<Set<string>>(new Set())
   const [listening, setListening] = useState(true)
-  const [idleBeepTesting, setIdleBeepTesting] = useState(false)
-  const [idleBeepTestSecs, setIdleBeepTestSecs] = useState(30)
-  const [idleWarningBeepsEnabled, setIdleWarningBeepsEnabled] = useState(true)
   const insecureContext = useClientSnapshot(() => !window.isSecureContext, false)
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
+  const { bumpActivity, enabled, testing, testSecs, toggleEnabled, toggleTest } =
+    useIdleWarningBeeps(listening, enableAudio)
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
-  const bumpActivity = useControllerIdleWarning(listening && idleWarningBeepsEnabled)
 
   const persistEntries = useCallback((next: KeyLogEntry[]) => {
     entriesRef.current = next
@@ -177,36 +171,6 @@ export default function KeyLogger() {
     startTransition(() => setEntries(loaded))
   }, [])
 
-  useEffect(() => () => cancelIdleWarningSequenceTest(), [])
-
-  const stopIdleBeepTest = () => {
-    cancelIdleWarningSequenceTest()
-    setIdleBeepTesting(false)
-  }
-
-  const toggleIdleWarningBeeps = () => {
-    if (idleWarningBeepsEnabled && idleBeepTesting) stopIdleBeepTest()
-    setIdleWarningBeepsEnabled((v) => !v)
-  }
-
-  const toggleIdleBeepTest = () => {
-    if (idleBeepTesting) return stopIdleBeepTest()
-    enableAudio()
-    setIdleBeepTestSecs(30)
-    setIdleBeepTesting(true)
-    playIdleWarningSequenceTest(stopIdleBeepTest)
-  }
-
-  useEffect(() => {
-    if (!idleBeepTesting) return
-
-    const id = window.setInterval(() => {
-      setIdleBeepTestSecs((s) => Math.max(0, s - 1))
-    }, 1000)
-
-    return () => window.clearInterval(id)
-  }, [idleBeepTesting])
-
   useEffect(() => {
     if (!listening) {
       window.speechSynthesis?.cancel()
@@ -318,38 +282,13 @@ export default function KeyLogger() {
               Each entry is logged on press; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
               feedback on press.
             </p>
-            <details className="text-xs text-zinc-500">
-              <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
-                Idle warning beeps{!idleWarningBeepsEnabled ? ' (disabled)' : ''}
-              </summary>
-              <div className="mt-1.5 leading-relaxed space-y-0.5">
-                <p>Controller auto-sleeps after 15min of inactivity.</p>
-                <p>
-                  So subtle warning beeps are given at 30s before (after 14m30s idleness), -20, -15,
-                  -10, -6.5, -3.5.
-                </p>
-                <p>Press any controller button to reset the timer.</p>
-                <p>
-                  <i>ABXY recommended to avoid new log entries.</i>
-                </p>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={toggleIdleWarningBeeps}
-                  className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
-                >
-                  {idleWarningBeepsEnabled ? 'Disable' : 'Enable'}
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleIdleBeepTest}
-                  className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
-                >
-                  {idleBeepTesting ? `Testing - ${idleBeepTestSecs}s` : 'Test'}
-                </button>
-              </div>
-            </details>
+            <IdleWarningBeeps
+              enabled={enabled}
+              testing={testing}
+              testSecs={testSecs}
+              onToggleEnabled={toggleEnabled}
+              onToggleTest={toggleTest}
+            />
           </>
         )}
       </section>

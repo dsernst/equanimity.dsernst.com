@@ -121,37 +121,64 @@ export function IdleWarningBeeps({
   onToggleEnabled: () => void
   onToggleTest: () => void
 }) {
+  const sleepMin = CONTROLLER_SLEEP_MS / 60_000
+
   return (
-    <details className="text-xs text-zinc-500">
-      <summary className="cursor-pointer hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+    <details className="group w-full">
+      <summary className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500 transition hover:text-zinc-400 [&::-webkit-details-marker]:hidden">
+        <span
+          aria-hidden
+          className="inline-block text-[9px] transition-transform group-open:rotate-90"
+        >
+          ▸
+        </span>
         Idle warning beeps{!enabled ? ' (disabled)' : ''}
       </summary>
-      <div className="mt-1.5 leading-relaxed space-y-0.5">
-        <p>Controller auto-sleeps after 15min of inactivity.</p>
-        <p>
-          So subtle warning beeps are given at 30s before (after 14m30s idleness), -20, -15, -10,
-          -6.5, -3.5.
+      <div className="mt-2 space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+        <p className="text-sm leading-relaxed text-zinc-300">
+          Controller auto-sleeps after{' '}
+          <span className="font-mono text-zinc-200">
+            {sleepMin}
+            <span className="text-[8px]"> </span>min
+          </span>{' '}
+          of inactivity.
         </p>
-        <p>Press any controller button to reset the timer.</p>
-        <p>
-          <i>ABXY recommended to avoid new log entries.</i>
+
+        <div>
+          <p className="mb-1.5 text-xs text-zinc-500">Warning beeps before sleep</p>
+          <div className="flex flex-wrap gap-1.5">
+            {CONTROLLER_IDLE_WARNINGS.map(({ remainingMs }) => (
+              <span
+                key={remainingMs}
+                className="rounded bg-zinc-800 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300"
+              >
+                −{remainingMs / 1000}s
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs leading-relaxed text-zinc-400">
+          Press any controller button to reset the timer.{' '}
+          <span className="text-zinc-500">ABXY recommended to avoid new log entries.</span>
         </p>
-      </div>
-      <div className="mt-2 flex gap-2">
-        <button
-          type="button"
-          onClick={onToggleEnabled}
-          className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
-        >
-          {enabled ? 'Disable' : 'Enable'}
-        </button>
-        <button
-          type="button"
-          onClick={onToggleTest}
-          className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
-        >
-          {testing ? `Testing - ${testSecs}s` : 'Test'}
-        </button>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onToggleEnabled}
+            className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
+          >
+            {enabled ? 'Disable' : 'Enable'}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleTest}
+            className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
+          >
+            {testing ? `Testing - ${testSecs}s` : 'Test'}
+          </button>
+        </div>
       </div>
     </details>
   )

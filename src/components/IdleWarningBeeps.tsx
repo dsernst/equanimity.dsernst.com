@@ -58,7 +58,7 @@ export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void)
   const [enabled, setEnabled] = useState(true)
   const [testing, setTesting] = useState(false)
   const [testSecs, setTestSecs] = useState(30)
-  const bumpActivity = useControllerIdleWarning(listening && enabled)
+  const bumpActivityBase = useControllerIdleWarning(listening && enabled)
 
   useEffect(() => {
     startTransition(() => setEnabled(loadEnabled()))
@@ -70,6 +70,11 @@ export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void)
     cancelIdleWarningSequenceTest()
     setTesting(false)
   }, [])
+
+  const bumpActivity = useCallback(() => {
+    bumpActivityBase()
+    stopTest()
+  }, [bumpActivityBase, stopTest])
 
   const toggleEnabled = useCallback(() => {
     if (enabled && testing) stopTest()

@@ -46,8 +46,7 @@ export default function KeyLogger() {
   const [listening, setListening] = useState(true)
   const insecureContext = useClientSnapshot(() => !window.isSecureContext, false)
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
-  const { bumpActivity, enabled, testing, testSecs, toggleEnabled, toggleTest } =
-    useIdleWarningBeeps(listening, enableAudio)
+  const { bumpActivity, ...idleBeepsProps } = useIdleWarningBeeps(listening, enableAudio)
   const entriesRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
 
@@ -278,13 +277,7 @@ export default function KeyLogger() {
               onKeyUp={handleTrackedKeyUp}
             />
 
-            <IdleWarningBeeps
-              enabled={enabled}
-              testing={testing}
-              testSecs={testSecs}
-              onToggleEnabled={toggleEnabled}
-              onToggleTest={toggleTest}
-            />
+            <IdleWarningBeeps {...idleBeepsProps} />
           </>
         )}
       </section>

@@ -20,22 +20,48 @@ function saveEnabled(enabled: boolean) {
   writeLocalStorage(STORAGE_KEY, String(enabled))
 }
 
-function useControllerIdleWarning(active: boolean) {
+export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void) {
+  const [enabled, setEnabled] = useState(true)
+  const [testing, setTesting] = useState(false)
+  const [testSecs, setTestSecs] = useState(30)
   const lastActivityRef = useRef(0)
   const firedRef = useRef<Set<number>>(new Set())
+  const active = listening && enabled
 
-  const bumpActivity = useCallback(() => {
+  useEffect(() => {
+    startTransition(() => setEnabled(loadEnabled()))
+  }, [])
+
+  useEffect(() => () => cancelIdleWarningSequenceTest(), [])
+
+  const resetIdleTimer = useCallback(() => {
     lastActivityRef.current = Date.now()
     firedRef.current.clear()
   }, [])
 
+  const stopTest = useCallback(() => {
+    cancelIdleWarningSequenceTest()
+    setTesting(false)
+  }, [])
+
+  const bumpActivity = useCallback(() => {
+    resetIdleTimer()
+    stopTest()
+  }, [resetIdleTimer, stopTest])
+
   useEffect(() => {
     if (!active) return
 
-    lastActivityRef.current = Date.now()
-    firedRef.current.clear()
+    resetIdleTimer()
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') resetIdleTimer()
+      else stopTest()
+    }
 
     const tick = () => {
+      if (document.visibilityState !== 'visible') return
+
       const idleMs = Date.now() - lastActivityRef.current
 
       for (const { remainingMs, gain } of CONTROLLER_IDLE_WARNINGS) {
@@ -47,34 +73,13 @@ function useControllerIdleWarning(active: boolean) {
       }
     }
 
+    document.addEventListener('visibilitychange', onVisibility)
     const id = window.setInterval(tick, IDLE_POLL_MS)
-    return () => window.clearInterval(id)
-  }, [active, bumpActivity])
-
-  return bumpActivity
-}
-
-export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void) {
-  const [enabled, setEnabled] = useState(true)
-  const [testing, setTesting] = useState(false)
-  const [testSecs, setTestSecs] = useState(30)
-  const bumpActivityBase = useControllerIdleWarning(listening && enabled)
-
-  useEffect(() => {
-    startTransition(() => setEnabled(loadEnabled()))
-  }, [])
-
-  useEffect(() => () => cancelIdleWarningSequenceTest(), [])
-
-  const stopTest = useCallback(() => {
-    cancelIdleWarningSequenceTest()
-    setTesting(false)
-  }, [])
-
-  const bumpActivity = useCallback(() => {
-    bumpActivityBase()
-    stopTest()
-  }, [bumpActivityBase, stopTest])
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.clearInterval(id)
+    }
+  }, [active, resetIdleTimer, stopTest])
 
   const toggleEnabled = useCallback(() => {
     if (enabled && testing) stopTest()
@@ -117,14 +122,14 @@ export function IdleWarningBeeps({
   enabled,
   testing,
   testSecs,
-  onToggleEnabled,
-  onToggleTest,
+  toggleEnabled,
+  toggleTest,
 }: {
   enabled: boolean
   testing: boolean
   testSecs: number
-  onToggleEnabled: () => void
-  onToggleTest: () => void
+  toggleEnabled: () => void
+  toggleTest: () => void
 }) {
   const sleepMin = CONTROLLER_SLEEP_MS / 60_000
 
@@ -171,14 +176,14 @@ export function IdleWarningBeeps({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={onToggleEnabled}
+            onClick={toggleEnabled}
             className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800"
           >
             {enabled ? 'Disable' : 'Enable'}
           </button>
           <button
             type="button"
-            onClick={onToggleTest}
+            onClick={toggleTest}
             className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm tabular-nums text-zinc-300 transition hover:bg-zinc-800"
           >
             {testing ? `Testing - ${testSecs}s` : 'Test'}

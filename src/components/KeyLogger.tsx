@@ -278,10 +278,6 @@ export default function KeyLogger() {
               onKeyUp={handleTrackedKeyUp}
             />
 
-            <p className="text-xs text-zinc-500">
-              Each entry is logged on press; holds over {HOLD_THRESHOLD_MS}ms are marked. Spoken
-              feedback on press.
-            </p>
             <IdleWarningBeeps
               enabled={enabled}
               testing={testing}

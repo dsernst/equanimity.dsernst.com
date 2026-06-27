@@ -9,8 +9,11 @@ export function formatTimestamp(ms: number): string {
 }
 
 export function formatRelative(from: number, to: number): string {
-  const delta = to - from
-  return `+${(delta / 1000).toFixed(1)}s`
+  const seconds = (to - from) / 1000
+  const minutes = seconds / 60
+  if (minutes > 60) return `+${(minutes / 60).toFixed(1)} hrs`
+  if (seconds > 60) return `+${minutes.toFixed(1)}min`
+  return `+${seconds.toFixed(1)}s`
 }
 
 export function formatDuration(ms: number): string {

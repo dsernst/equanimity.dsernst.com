@@ -44,6 +44,7 @@ export default function KeyLogger() {
   const [heldKeys, setHeldKeys] = useState<Set<TrackedKey>>(new Set())
   const [activeHoldEntryIds, setActiveHoldEntryIds] = useState<Set<string>>(new Set())
   const [listening, setListening] = useState(true)
+  const [exportedCount, setExportedCount] = useState<number | null>(null)
   const insecureContext = useClientSnapshot(() => !window.isSecureContext, false)
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
   const { bumpActivity, ...idleBeepsProps } = useIdleWarningBeeps(listening, enableAudio)
@@ -206,6 +207,7 @@ export default function KeyLogger() {
   const clearLog = () => {
     entriesRef.current = []
     setEntries([])
+    setExportedCount(null)
     pressRef.current = {}
     setHeldKeys(new Set())
     setActiveHoldEntryIds(new Set())
@@ -230,6 +232,7 @@ export default function KeyLogger() {
     a.download = formatExportFilename()
     a.click()
     URL.revokeObjectURL(url)
+    setExportedCount(entries.length)
   }
 
   const sessionStart = entries.length > 0 ? entries[entries.length - 1]!.timestamp : null
@@ -299,7 +302,7 @@ export default function KeyLogger() {
               disabled={entries.length === 0}
               className="cursor-pointer rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:bg-zinc-800 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
             >
-              Export
+              {exportedCount === entries.length && entries.length > 0 ? 'Exported.' : 'Export'}
             </button>
             <button
               onClick={clearLog}

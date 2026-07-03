@@ -8,12 +8,12 @@ Built for long sits where you want a physical, eyes-closed way to note what come
 
 The app listens for keyboard events (from a controller in **keyboard mode**) and logs each D-pad press on release:
 
-| Direction | Key | Label                                     |
-| --------- | --- | ----------------------------------------- |
-| Up        | `e` | "Start Again" — distracted mind           |
-| Right     | `c` | "Craving"                                 |
-| Left      | `d` | "Anger"                                   |
-| Down      | `f` | "Breathing" — too agitated for sensations |
+| Direction | Key | Label                           |
+| --------- | --- | ------------------------------- |
+| Up        | `e` | "Start Again" — distracted mind |
+| Right     | `c` | "Craving"                       |
+| Left      | `d` | "Anger"                         |
+| Down      | `f` | "Sleepiness"                    |
 
 On press, the label is spoken aloud. Holds longer than 400ms are recorded as holds with duration. Entries persist in `localStorage` and can be exported as TSV.
 

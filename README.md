@@ -12,7 +12,7 @@ The app listens for keyboard events (from a controller in **keyboard mode**) and
 | --------- | --- | ----------------------------------------- |
 | Up        | `e` | "Start Again" — distracted mind           |
 | Right     | `c` | "Craving"                                 |
-| Left      | `d` | "Hatred"                                  |
+| Left      | `d` | "Anger"                                   |
 | Down      | `f` | "Breathing" — too agitated for sensations |
 
 On press, the label is spoken aloud. Holds longer than 400ms are recorded as holds with duration. Entries persist in `localStorage` and can be exported as TSV.

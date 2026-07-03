@@ -23,7 +23,7 @@ export const CONTROLLER_IDLE_WARNINGS = [
 export const KEY_LABELS: Record<TrackedKey, KeyLabel> = {
   e: { label: 'Start Again', note: 'distracted mind' },
   c: { label: 'Craving' },
-  d: { label: 'Hatred' },
+  d: { label: 'Anger' },
   f: { label: 'Breathing', note: 'too agitated for sensations' },
 }
 

@@ -4,7 +4,7 @@ import { homedir } from 'node:os'
 
 const EXPORTS_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}\.tsv$/ // eg `2026-06-19T17_07_29.tsv`
 const DownloadsDir = join(homedir(), 'Downloads')
-const LogsDir = join(import.meta.dir, '..', 'logs')
+const LogsDir = join(process.cwd(), 'logs')
 
 // Get list of export TSVs in ~/Downloads
 const tsvs = readdirSync(DownloadsDir)

@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "next build",
     "dev": "next dev",
     "dev:https": "next dev --experimental-https",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "exports": "bun run scripts/get-downloaded-exports.ts",
+    "lint": "eslint",
+    "start": "next start"
   },
   "dependencies": {
     "next": "16.2.9",

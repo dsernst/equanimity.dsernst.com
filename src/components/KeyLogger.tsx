@@ -229,7 +229,9 @@ export default function KeyLogger() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = formatExportFilename()
+    a.download = formatExportFilename(
+      new Date(entries[entries.length - 1]!.timestamp),
+    )
     a.click()
     URL.revokeObjectURL(url)
     setExportedCount(entries.length)

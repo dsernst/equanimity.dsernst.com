@@ -49,6 +49,7 @@ export default function KeyLogger() {
   const { needsAudioGate, enableAudio } = useTouchAudioGate()
   const { bumpActivity, ...idleBeepsProps } = useIdleWarningBeeps(listening, enableAudio)
   const entriesRef = useRef<KeyLogEntry[]>([])
+  const redoRef = useRef<KeyLogEntry[]>([])
   const pressRef = useRef<Partial<Record<TrackedKey, { start: number; entryId: string }>>>({})
 
   const persistEntries = useCallback((next: KeyLogEntry[]) => {
@@ -97,11 +98,48 @@ export default function KeyLogger() {
         timestamp,
         type: 'press',
       }
+      redoRef.current = []
       persistEntries([entry, ...entriesRef.current])
       return entry.id
     },
     [persistEntries],
   )
+
+  const undo = useCallback(() => {
+    const [removed, ...rest] = entriesRef.current
+    if (!removed) return
+    enableAudio()
+    bumpActivity()
+    redoRef.current = [removed, ...redoRef.current]
+    for (const key of Object.keys(pressRef.current) as TrackedKey[]) {
+      const press = pressRef.current[key]
+      if (!press || press.entryId !== removed.id) continue
+      delete pressRef.current[key]
+      setHeldKeys((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+      setActiveHoldEntryIds((prev) => {
+        const next = new Set(prev)
+        next.delete(removed.id)
+        return next
+      })
+      break
+    }
+    persistEntries(rest)
+    speakLabel(`Undo ${removed.label}`)
+  }, [persistEntries, enableAudio, bumpActivity])
+
+  const redo = useCallback(() => {
+    const [restored, ...restRedo] = redoRef.current
+    if (!restored) return
+    enableAudio()
+    bumpActivity()
+    redoRef.current = restRedo
+    persistEntries([restored, ...entriesRef.current])
+    speakLabel(`Redo ${restored.label}`)
+  }, [persistEntries, enableAudio, bumpActivity])
 
   const finalizeKeyRelease = useCallback(
     (entryId: string, pressStart: number) => {
@@ -181,6 +219,17 @@ export default function KeyLogger() {
       if (e.repeat) return
       bumpActivity()
 
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault()
+        undo()
+        return
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        redo()
+        return
+      }
+
       const key = resolveTrackedKey(e.key)
       if (!key) return
       e.preventDefault()
@@ -202,10 +251,11 @@ export default function KeyLogger() {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [listening, bumpActivity, handleTrackedKeyDown, handleTrackedKeyUp])
+  }, [listening, bumpActivity, handleTrackedKeyDown, handleTrackedKeyUp, undo, redo])
 
   const clearLog = () => {
     entriesRef.current = []
+    redoRef.current = []
     setEntries([])
     setExportedCount(null)
     pressRef.current = {}

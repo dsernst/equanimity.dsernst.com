@@ -3,10 +3,30 @@ import { CONTROLLER_IDLE_WARNINGS } from '@/lib/constants'
 let audioCtx: AudioContext | null = null
 let testTimeoutIds: number[] = []
 
+function dropAudioContext() {
+  if (audioCtx) void audioCtx.close().catch(() => {})
+  audioCtx = null
+}
+
 function getAudioContext() {
+  if (audioCtx) {
+    // Safari can leave AudioContext "running" (clock still advances) but silent; close+recreate.
+    const MAX_CTX_AGE_SEC = 30 * 60
+    if (audioCtx.state === 'closed' || audioCtx.currentTime > MAX_CTX_AGE_SEC) dropAudioContext()
+  }
+
   if (!audioCtx) audioCtx = new AudioContext()
   if (audioCtx.state === 'suspended') void audioCtx.resume()
   return audioCtx
+}
+
+if (typeof window !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') dropAudioContext()
+  })
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) dropAudioContext()
+  })
 }
 
 /** Single soft tick — one second of hold elapsed. */

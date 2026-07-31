@@ -64,6 +64,8 @@ export function useIdleWarningBeeps(listening: boolean, enableAudio: () => void)
 
       const idleMs = Date.now() - lastActivityRef.current
 
+      if (idleMs >= CONTROLLER_SLEEP_MS) return resetIdleTimer() // Reset if tab was in background for a long while
+
       for (const { remainingMs, gain } of CONTROLLER_IDLE_WARNINGS) {
         if (firedRef.current.has(remainingMs)) continue
         if (idleMs < CONTROLLER_SLEEP_MS - remainingMs) continue
